@@ -591,7 +591,7 @@ public class HTTPInputStream extends InputStream
                 byte[] rawContent = readRawContent(maxPostLength);
                 String data = Utils.toString(rawContent);
                 if ( (type != null) && type.contains("application/x-www-form-urlencoded") )
-                    data = URLDecoder.decode(data, "UTF-8");
+                    data = Utils.URLDecode(data);
                 for(String param: data.split("&"))
                 {
                     int equalPos = param.indexOf('=');
@@ -603,32 +603,32 @@ public class HTTPInputStream extends InputStream
             return output;
         } //get
         else if (headers.isGet())
-            return headers.parseHTTPQueryParameters(headers.getQueryString());
+            return headers.getQueryParameters();
         else
             return new HashMap();
     }
 
-    public Map getMultiPartFormData(int maxPostLength) throws IOException 
+    public Map getMultiPartFormData(int maxPostLength) throws IOException
     {
         HTTPRequestHeaders headers = getHeaders();
         String type = headers.getHeader("Content-Type", null);
         if ( !headers.isPost() || type == null || !type.contains("multipart/form-data") )
             return new HashMap();
-        
+
         Map results = new HashMap();
         byte[] rawContent = readRawContent(maxPostLength);
 
         HTMLFormPart[] formParts = HTMLFormPart.processPostedFormData(headers, rawContent);
-        if ( formParts != null ) 
+        if ( formParts != null )
         {
-            for ( HTMLFormPart formPart : formParts ) 
+            for ( HTMLFormPart formPart : formParts )
             {
                 String name = formPart.getAttribute("name");
 
-                if ( name.endsWith("[]") ) 
+                if ( name.endsWith("[]") )
                 {
                     HTMLFormPart[] array;
-                    if ( results.containsKey(name) ) 
+                    if ( results.containsKey(name) )
                     {
                         array = (HTMLFormPart[]) results.get(name);
                         array = Arrays.copyOf(array, array.length + 1);

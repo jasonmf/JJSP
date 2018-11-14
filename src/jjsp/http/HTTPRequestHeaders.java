@@ -31,7 +31,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     public static final int DEFAULT_HEADER_LINE_LENGTH = 4*1024;
 
     private int pos;
-    private String reqURL;
+    private String encodedURL; // encoded request url
     private boolean isSecure;
     private byte[] lineBuffer;
     private String clientIPAddress;
@@ -46,7 +46,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     public HTTPRequestHeaders(int lineLength)
     {
         pos = 0;
-        reqURL = null;
+        encodedURL = null;
         lineBuffer = new byte[lineLength];
         queryMap = new HashMap();
         cookieMap = new HashMap();
@@ -56,7 +56,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     public void clear()
     {
         super.clear();
-        reqURL = null;
+        encodedURL = null;
         pos = 0;
         isSecure = false;
         queryParsed = false;
@@ -157,7 +157,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         return true;
     }
 
-    public String getRawURL() 
+    public String getRawURL()
     {
         int space = mainLine.indexOf(" ");
         if (space < 0)
@@ -169,24 +169,27 @@ public class HTTPRequestHeaders extends HTTPHeaders
         return mainLine.substring(space+1, end).trim();
     }
 
-    public String getRequestURL()
+    public String getRequestURL() {
+        return getRequestURL(true);
+    }
+
+    public String getRequestURL(boolean decode)
     {
-        if (reqURL != null)
-            return reqURL;
-
-        int space = mainLine.indexOf(" ");
-        if (space < 0)
-            return null;
-        int end = mainLine.lastIndexOf(" ");
-        if (end < 0)
-            return null;
-
-        try
-        {
-            reqURL = URLDecoder.decode(mainLine.substring(space+1, end).trim(), "UTF-8");
+        if (encodedURL == null) {
+            int start = mainLine.indexOf(" ");
+            if (start < 0)
+                return null;
+            int end = mainLine.lastIndexOf(" ");
+            if (end < 0)
+                return null;
+            encodedURL = mainLine.substring(start + 1, end).trim();
         }
-        catch (Exception e) {}
-        return reqURL;
+
+        if (decode) {
+            return Utils.URLDecode(encodedURL);
+        } else {
+            return encodedURL;
+        }
     }
 
     public String getAbsoluteURL()
@@ -208,9 +211,13 @@ public class HTTPRequestHeaders extends HTTPHeaders
         return result;
     }
 
-    public String getPath()
+    public String getPath() {
+        return getPath(true);
+    }
+
+    public String getPath(boolean decode)
     {
-        String reqURL = getRequestURL();
+        String reqURL = getRequestURL(false);
         if (reqURL.startsWith("http://"))
         {
             int s = reqURL.indexOf("/", 7);
@@ -234,12 +241,12 @@ public class HTTPRequestHeaders extends HTTPHeaders
         if (h >= 0)
             reqURL = reqURL.substring(0, h);
 
-        return reqURL;
+        return decode ? Utils.URLDecode(reqURL) : reqURL;
     }
 
     public String getQueryString()
     {
-        String reqURL = getRequestURL();
+        String reqURL = getRequestURL(false);
         int q = reqURL.indexOf("?");
         if (q < 0)
             return null;
@@ -253,8 +260,8 @@ public class HTTPRequestHeaders extends HTTPHeaders
     {
         if (!queryParsed)
         {
+            queryMap = parseHTTPQueryParameters(getQueryString());
             queryParsed = true;
-            parseHTTPQueryParameters(getQueryString(), queryMap);
         }
         return queryMap;
     }
@@ -281,7 +288,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     {
         Map m = getQueryParameters();
         String value = (String) m.get(key);
-        if (m == null)
+        if (value == null)
             throw new IllegalStateException("Missing query parameter: '"+key+"'");
         return value;
     }
@@ -378,15 +385,9 @@ public class HTTPRequestHeaders extends HTTPHeaders
         }
     }
 
-    public static Map parseHTTPQueryParameters(String queryString)
+    private static Map parseHTTPQueryParameters(String queryString)
     {
-        return parseHTTPQueryParameters(queryString, null);
-    }
-
-    public static Map parseHTTPQueryParameters(String queryString, Map result)
-    {
-        if (result == null)
-            result = new HashMap();
+        Map<String, String> result = new HashMap<>();
         if (queryString == null)
             return result;
 
@@ -399,13 +400,10 @@ public class HTTPRequestHeaders extends HTTPHeaders
             int eq = params[i].indexOf("=");
             if (eq < 0)
                 continue;
-            try
-            {
-                String key = URLDecoder.decode(params[i].substring(0, eq), "UTF-8");
-                String value = URLDecoder.decode(params[i].substring(eq+1), "UTF-8");
-                result.put(key, value);
-            }
-            catch (UnsupportedEncodingException e) {}
+
+            String key = Utils.URLDecode(params[i].substring(0, eq));
+            String value = Utils.URLDecode(params[i].substring(eq+1));
+            result.put(key, value);
         }
 
         return result;
