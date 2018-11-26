@@ -260,7 +260,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     {
         if (!queryParsed)
         {
-            queryMap = parseHTTPQueryParameters(getQueryString());
+            queryMap = HTTPInputStream.parseUrlEncodedQueries(getQueryString(), true);
             queryParsed = true;
         }
         return queryMap;
@@ -383,30 +383,6 @@ public class HTTPRequestHeaders extends HTTPHeaders
         {
             throw new IllegalStateException("Invalid date string '"+value+"'");
         }
-    }
-
-    private static Map parseHTTPQueryParameters(String queryString)
-    {
-        Map<String, String> result = new HashMap<>();
-        if (queryString == null)
-            return result;
-
-        if (queryString.startsWith("?"))
-            queryString = queryString.substring(1);
-
-        String[] params = queryString.split("&");
-        for (int i=0; i<params.length; i++)
-        {
-            int eq = params[i].indexOf("=");
-            if (eq < 0)
-                continue;
-
-            String key = Utils.URLDecode(params[i].substring(0, eq));
-            String value = Utils.URLDecode(params[i].substring(eq+1));
-            result.put(key, value);
-        }
-
-        return result;
     }
 
     public boolean isHTTP11()
