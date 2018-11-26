@@ -17,11 +17,16 @@ this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
-import jjsp.util.*;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import jjsp.util.JSONParser;
+import jjsp.util.Utils;
 
 public class HTTPInputStream extends InputStream
 {
@@ -257,7 +262,7 @@ public class HTTPInputStream extends InputStream
             if (contentStream instanceof UnchunkedContentStream)
             {
                 int len = (int)((UnchunkedContentStream)contentStream).length;
-                if (len >= maxLength)
+                if (len > maxLength)
                     throw new IOException("POST content too long ("+len+")");
 
                 byte[] raw = new byte[len];
@@ -280,7 +285,7 @@ public class HTTPInputStream extends InputStream
                 while ((read = contentStream.read(buf)) >= 0)
                 {
                     bout.write(buf, 0, read);
-                    if (bout.size() >= maxLength)
+                    if (bout.size() > maxLength)
                         throw new IOException("POST content too long ("+bout.size()+")");
                 }
                 return bout.toByteArray();
@@ -561,7 +566,10 @@ public class HTTPInputStream extends InputStream
 
     public Map getPostParameters() throws IOException
     {
-        return getPostParameters(1024*1024);
+        HTTPRequestHeaders headers = getHeaders();
+        String contentLength = headers.getHeader("Content-Length");
+        int length = (contentLength == null || contentLength.isEmpty()) ? 1024 * 1024 : Integer.parseInt(contentLength);
+        return getPostParameters(length);
     }
 
     /**
@@ -576,48 +584,41 @@ public class HTTPInputStream extends InputStream
     public Map getPostParameters(int maxPostLength) throws IOException
     {
         HTTPRequestHeaders headers = getHeaders();
-        String type = headers.getHeader("Content-Type", null);
+        String contentType = headers.getHeader("Content-Type", null);
+        boolean isMultiPart = contentType != null && contentType.contains("multipart/form-data");
+        boolean isJSON = contentType != null && contentType.contains("application/json");
+        boolean isURLEncoded = contentType != null && contentType.contains("application/x-www-form-urlencoded");
 
-        if(headers.isPost())
-        {
-            //load raw post data
-            Map output = new HashMap();
-
-            //multipart post
-            if ((type != null) && type.contains("multipart/form-data"))
+        Map output = new HashMap();
+        if( headers.isPost() ) {
+            // HTTP POST: load and parse raw post data
+            if (isMultiPart) {
+                // Multipart POST
                 output = getMultiPartFormData(maxPostLength);
-            else //simple post
-            {
-                byte[] rawContent = readRawContent(maxPostLength);
-                String data = Utils.toString(rawContent);
-                if ( (type != null) && type.contains("application/x-www-form-urlencoded") )
-                    data = Utils.URLDecode(data);
-                for(String param: data.split("&"))
-                {
-                    int equalPos = param.indexOf('=');
-                    if(equalPos > -1)
-                        output.put(param.substring(0,equalPos), param.substring(equalPos+1));
-                }
             }
+            else if (isJSON) {
+                // JSON POST
+                output = getPostJSONAsMap(maxPostLength);
+            }
+            else {
+                // Simple POST (if url encoded, need to decode keys and values after & split, spaces encoded to '+')
+                output = getXWWWFormUrlEncodedData(maxPostLength, isURLEncoded);
+            }
+        }
+        else if (headers.isGet()) {
+            // HTTP GET: parse URL query string
+            output = headers.getQueryParameters();
+        }
 
-            return output;
-        } //get
-        else if (headers.isGet())
-            return headers.getQueryParameters();
-        else
-            return new HashMap();
+        return output;
     }
 
     public Map getMultiPartFormData(int maxPostLength) throws IOException
     {
-        HTTPRequestHeaders headers = getHeaders();
-        String type = headers.getHeader("Content-Type", null);
-        if ( !headers.isPost() || type == null || !type.contains("multipart/form-data") )
-            return new HashMap();
-
         Map results = new HashMap();
         byte[] rawContent = readRawContent(maxPostLength);
 
+        HTTPRequestHeaders headers = getHeaders();
         HTMLFormPart[] formParts = HTMLFormPart.processPostedFormData(headers, rawContent);
         if ( formParts != null )
         {
@@ -644,5 +645,49 @@ public class HTTPInputStream extends InputStream
             }
         }
         return results;
+    }
+
+    public Map getXWWWFormUrlEncodedData(int maxPostLength, boolean urlDecode) throws IOException {
+        byte[] rawContent = readRawContent(maxPostLength);
+        String postData = Utils.toString(rawContent);
+        return parseUrlEncodedQueries(postData, urlDecode);
+    }
+
+    public static Map parseUrlEncodedQueries(String queryString, boolean urlDecode) {
+        Map results = new HashMap();
+        if ( queryString == null || queryString.isEmpty() )
+            return results;
+
+        if ( queryString.startsWith("?") )
+            queryString = queryString.substring(1);
+
+        String[] queries = queryString.split("&");
+        for ( String query : queries ) {
+            int eq = query.indexOf("=");
+            if ( eq < 0 )
+                continue;
+
+
+            String key = query.substring(0, eq);
+            String value = query.substring(eq + 1);
+            if (urlDecode) {
+                key = Utils.URLDecode(key);
+                value = Utils.URLDecode(value);
+            }
+            results.put(key, value);
+        }
+
+        return results;
+    }
+
+    public Map getPostJSONAsMap(int maxPostLength) throws IOException {
+        byte[] rawContent = readRawContent(maxPostLength);
+        String postData = Utils.toString(rawContent);
+        return (Map) JSONParser.parse(postData);
+    }
+
+    public String getPostJSONAsString(int maxPostLength) throws IOException {
+        byte[] rawContent = readRawContent(maxPostLength);
+        return Utils.toString(rawContent);
     }
 }
