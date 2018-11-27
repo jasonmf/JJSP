@@ -26,6 +26,10 @@ import java.security.*;
 
 import jjsp.util.*;
 
+/*
+ * HTTP header field names should be case-insensitive
+ * see: https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+ */
 public class HTTPHeaders
 {
     public static final int MAX_HEADERS = 128;
