@@ -22,8 +22,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import jjsp.util.JSONParser;
 import jjsp.util.Utils;
@@ -674,7 +676,33 @@ public class HTTPInputStream extends InputStream
                 key = Utils.URLDecode(key);
                 value = Utils.URLDecode(value);
             }
-            results.put(key, value);
+
+            // allow multiple values for a key, returns a list of value for that key
+            // e.g. names=Henry&name=Anne
+            // e.g. names[]=Henry&names[]=Anne
+            boolean multiValues = false;
+            if (key.endsWith("[]")) {
+                key = key.substring(0, key.length() - 2);
+                multiValues = true;
+            }
+            if (results.containsKey(key))
+                multiValues = true;
+
+            if (multiValues) {
+                List valueList;
+                Object currentVal = results.computeIfAbsent(key, k -> new ArrayList<>());
+                if ( !(currentVal instanceof List) ) {
+                    valueList = new ArrayList();
+                    valueList.add(currentVal);
+                    results.put(key, valueList);
+                } else {
+                    valueList = (List) currentVal;
+                }
+
+                valueList.add(value);
+            } else {
+                results.put(key, value);
+            }
         }
 
         return results;
