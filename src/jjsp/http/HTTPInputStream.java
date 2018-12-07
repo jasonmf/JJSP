@@ -655,6 +655,13 @@ public class HTTPInputStream extends InputStream
         return parseUrlEncodedQueries(postData, urlDecode);
     }
 
+    /*
+     * This parser allows multiple values for a key, and returns a list of value for that key.
+     * e.g. names=Henry&names=Anne
+     * e.g. names[]=Henry&names[]=Anne
+     * There is no standard for serialising and parsing key <--> multi-values in url query string and POST x-www-form-urlencoded data (see https://www.ietf.org/rfc/rfc3986.txt $3.4).
+     * But this method will follow the simple case described by/used in jquery (see https://api.jquery.com/jQuery.param/)
+     */
     public static Map parseUrlEncodedQueries(String queryString, boolean urlDecode) {
         Map results = new HashMap();
         if ( queryString == null || queryString.isEmpty() )
@@ -677,9 +684,7 @@ public class HTTPInputStream extends InputStream
                 value = Utils.URLDecode(value);
             }
 
-            // allow multiple values for a key, returns a list of value for that key
-            // e.g. names=Henry&name=Anne
-            // e.g. names[]=Henry&names[]=Anne
+            // multiple values parsing
             boolean multiValues = false;
             if (key.endsWith("[]")) {
                 key = key.substring(0, key.length() - 2);
