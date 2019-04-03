@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 
@@ -25,11 +25,11 @@ import java.text.*;
 
 import jjsp.util.*;
 
-public class DirectoryFileLogger implements HTTPServerLogger 
+public class DirectoryFileLogger implements HTTPServerLogger
 {
     public static final long HOURLY = 60*60*1000;
     public static final long DAILY = 24*HOURLY;
-    
+
     private final File logDir;
     private final long logPeriod;
     private final boolean autoFlush;
@@ -37,7 +37,7 @@ public class DirectoryFileLogger implements HTTPServerLogger
 
     private long currentPeriod;
     private PrintStreamLogger currentLogger;
-    
+
     public DirectoryFileLogger(int maxExceptionLines, long logPeriod, File logDir) throws IOException
     {
         this(maxExceptionLines, logPeriod, logDir, true);
@@ -66,7 +66,8 @@ public class DirectoryFileLogger implements HTTPServerLogger
         String logFileName = "HTTPLog_"+new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date())+".log";
         try
         {
-            currentLogger.close();
+            if (currentLogger != null)
+                currentLogger.close();
         }
         catch (Exception e) {}
 
@@ -74,8 +75,8 @@ public class DirectoryFileLogger implements HTTPServerLogger
         currentLogger = new PrintStreamLogger(maxExceptionLines, ff, autoFlush);
         return currentLogger;
     }
-        
-    public void socketException(int port, boolean isSecure, InetSocketAddress clientAddress, Throwable t) 
+
+    public void socketException(int port, boolean isSecure, InetSocketAddress clientAddress, Throwable t)
     {
         try
         {
@@ -84,7 +85,7 @@ public class DirectoryFileLogger implements HTTPServerLogger
         }
         catch (Exception e)  {}
     }
-    
+
     public void requestProcessed(HTTPLogEntry logEntry)
     {
         try
@@ -94,7 +95,7 @@ public class DirectoryFileLogger implements HTTPServerLogger
         catch (Exception e) {}
     }
 
-    public synchronized void close() 
+    public synchronized void close()
     {
         try
         {
@@ -107,11 +108,11 @@ public class DirectoryFileLogger implements HTTPServerLogger
     public static void main(String[] args) throws Exception
     {
         HTTPServerLogger logger = new DirectoryFileLogger(10, 10000, new File("LogTEST"));
-        
+
         byte[] raw = Utils.getAsciiBytes("GET /test.html HTTP/1.1\r\nUser-Agent: tester\r\nX-Forwarded-For:192.55.33.2\r\n\r\n");
         HTTPRequestHeaders req = new HTTPRequestHeaders();
         req.readHeadersFromStream(new ByteArrayInputStream(raw));
-        
+
         HTTPResponseHeaders resp = new HTTPResponseHeaders();
         resp.configureAsOK();
         resp.setContentType("text/test");
