@@ -1,54 +1,45 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.net.URI;
 import java.sql.*;
-import javax.script.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.property.*;
-import javafx.beans.value.*;
-import javafx.scene.paint.*;
-import javafx.scene.text.*;
+import java.util.HashMap;
+import java.util.List;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
+import javafx.stage.FileChooser;
+import jjsp.engine.SQLDriver;
+import jjsp.util.Utils;
 
-import javafx.geometry.*;
-import javafx.util.*;
-import javafx.util.converter.*;
-import javafx.stage.*;
-import javafx.collections.*;
-
-import jjsp.http.*;
-import jjsp.engine.*;
-import jjsp.util.*;
-
-public class SQLTablePane extends JSONTablePane 
+public class SQLTablePane extends JSONTablePane
 {
     private SQLDriver driver;
     private TextField pageDisplay;
@@ -72,17 +63,17 @@ public class SQLTablePane extends JSONTablePane
         this.tableName = tableName;
         this.schemaName = schemaName;
         currentStart = totalRows = 0;
-    
+
         editingCell = null;
         beforeRowHeight = 40;
-        setStyle("-fx-font-size: 16px;"); //Sets the increment and decrement button sizes 
+        setStyle("-fx-font-size: 16px;"); //Sets the increment and decrement button sizes
 
         fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
 
         table = new DataViewTable();
         table.setFixedCellSize(beforeRowHeight);
-        table.setOnMouseDragged((evt) -> 
+        table.setOnMouseDragged((evt) ->
                               {
                                   if (!isRowResizeEvent)
                                       return;
@@ -92,27 +83,27 @@ public class SQLTablePane extends JSONTablePane
                                   double diff = (y - beforeY) / scaleFactor * 3;
                                   table.setFixedCellSize(Math.max(30, beforeRowHeight + diff));
                               });
-        
-        table.setOnMouseMoved((evt) -> 
+
+        table.setOnMouseMoved((evt) ->
                               {
                                   beforeY = evt.getY();
                                   beforeRowHeight = table.getFixedCellSize();
                               });
-        
-        table.setRowFactory((tbl) -> 
-                            { 
+
+        table.setRowFactory((tbl) ->
+                            {
                                 TableRow tr = new TableRow();
-                                tr.setOnMouseMoved((evt) -> 
+                                tr.setOnMouseMoved((evt) ->
                                                    {
                                                        double y = evt.getY();
-                                                       double height = tr.getHeight(); 
+                                                       double height = tr.getHeight();
                                                        isRowResizeEvent = (y < 7) || (y > height-7);
-                                
+
                                                        if (isRowResizeEvent)
                                                            setCursor(Cursor.N_RESIZE);
                                                        else
                                                            setCursor(Cursor.DEFAULT);
-                                                       
+
                                                        tableRowIndex = tr.getIndex();
                                                    } );
                                 tr.setOnMouseExited((evt) -> setCursor(Cursor.DEFAULT));
@@ -142,7 +133,7 @@ public class SQLTablePane extends JSONTablePane
             {
                 String title = cols.getString(1);
                 String typeDesc = cols.getString(2).toLowerCase();
-                
+
                 boolean isNullable = cols.getBoolean(3);
                 String isPrimaryKey = cols.getString(4);
                 if (isPrimaryKey.equals("PRI"))
@@ -150,13 +141,13 @@ public class SQLTablePane extends JSONTablePane
                     primaryKeyColName = title;
                     primaryKeyColumn = colIndex;
                 }
-                
+
                 try
                 {
                     positions.put(title, cols.getInt(5)-1);
                 }
                 catch (Exception e) {}
-                
+
                 Class type = String.class;
                 if (typeDesc.startsWith("int"))
                     type = Long.class;
@@ -173,7 +164,7 @@ public class SQLTablePane extends JSONTablePane
 
                 if (typeDesc.toLowerCase().indexOf("blob") >= 0)
                     selectedColumnsList += "'BLOB' as "+title;
-                else 
+                else
                     selectedColumnsList += title;
             }
 
@@ -207,7 +198,7 @@ public class SQLTablePane extends JSONTablePane
         last.setOnAction((evt) -> showRows(totalRows - this.rowsPerPage, this.rowsPerPage));
 
         Button deleteRow = new Button("Delete Row");
-        deleteRow.setOnAction((event) -> 
+        deleteRow.setOnAction((event) ->
                               {
                                   List rows = table.getSelectionModel().getSelectedIndices();
                                   if (rows.size() == 0)
@@ -215,9 +206,9 @@ public class SQLTablePane extends JSONTablePane
                                   int row = ((Integer) rows.get(0)).intValue();
                                   Object[] rowData = (Object[]) table.getItems().get(row);
                                   Object primaryKey = rowData[primaryKeyColumn];
-                                  
+
                                   Button del = new Button("Confirm Delete");
-                                  del.setOnAction((evt) -> 
+                                  del.setOnAction((evt) ->
                                                   {
                                                       SQLDriver.ConnectionWrapper wrapper2 = null;
                                                       try
@@ -238,38 +229,38 @@ public class SQLTablePane extends JSONTablePane
                                                           showError("Error deleting data", e);
                                                       }
                                                       finally
-                                                      { 
+                                                      {
                                                           driver.returnToPool(wrapper2);
                                                           clearAlert();
                                                       }
                                                   });
-                                  
+
                                   Button cancel = new Button("Do not delete");
                                   cancel.setOnAction((evt) ->  clearAlert());
-                                  
+
                                   HBox hb = new HBox(20);
                                   hb.getChildren().addAll(del, cancel);
                                   hb.setAlignment(Pos.CENTER);
-                                  
+
                                   BorderPane overlay = new BorderPane();
                                   overlay.setCenter(new Label("Are you sure you want to delete row "+primaryKey+" ?"));
                                   overlay.setBottom(hb);
                                   overlay.setMaxHeight(140);
                                   overlay.setMaxWidth(500);
-                                  
+
                                   overlay.setStyle("-fx-background-color: white; -fx-padding:20px; -fx-border-radius: 10 10 10 10; -fx-background-radius: 10 10 10 10;");
                                   overlayAlert(overlay);
                               });
-        
+
         Button addRow = new Button("Add Row");
-        addRow.setOnAction((evt) -> 
+        addRow.setOnAction((evt) ->
                            {
                                SQLDriver.ConnectionWrapper wrapper2 = null;
                                try
                                {
                                    wrapper2 = driver.getConnection(1000);
                                    Statement stmt = wrapper2.getStatement();
-                                   
+
                                    if (!isPostgres())
                                        stmt.execute("use "+schemaName);
 
@@ -291,40 +282,40 @@ public class SQLTablePane extends JSONTablePane
                                    showError("Error inserting row", e);
                                }
                            });
-        
+
         ComboBox pageSizeSelection = new ComboBox();
         pageSizeSelection.getItems().addAll(10, 50, 100, 500, 1000, 10000);
         rowsPerPage = 1000;
         pageSizeSelection.getSelectionModel().select(4);
-        pageSizeSelection.setOnAction((evt) -> 
-                                      { 
-                                          this.rowsPerPage = ((Integer) pageSizeSelection.getSelectionModel().getSelectedItem()).intValue(); 
+        pageSizeSelection.setOnAction((evt) ->
+                                      {
+                                          this.rowsPerPage = ((Integer) pageSizeSelection.getSelectionModel().getSelectedItem()).intValue();
                                           showRows(currentStart, this.rowsPerPage);
                                       });
-        
+
         pageDisplay = new TextField("");
         pageDisplay.setMinWidth(200);
-        pageDisplay.setOnAction((evt) -> 
-                                { 
+        pageDisplay.setOnAction((evt) ->
+                                {
                                     String prevText = pageDisplay.getText().trim();
-                                    try 
-                                    { 
-                                        long row = Long.parseLong(prevText); 
-                                        showRows(row, this.rowsPerPage); 
+                                    try
+                                    {
+                                        long row = Long.parseLong(prevText);
+                                        showRows(row, this.rowsPerPage);
                                     }
-                                    catch (Exception e) 
+                                    catch (Exception e)
                                     {
                                         showError("Invalid number format", e);
                                     }
                                 });
         pageDisplay.focusedProperty().addListener((evt) -> {  Platform.runLater(() -> pageDisplay.selectAll()); });
-        
+
         HBox hBox = new HBox(10);
         HBox.setHgrow(pageDisplay, Priority.ALWAYS);
         BorderPane.setMargin(hBox, new Insets(10,0,0,0));
         hBox.setAlignment(Pos.BASELINE_CENTER);
         hBox.getChildren().addAll(addRow, deleteRow, pageDisplay, first, last, new Label("Rows per page:"), pageSizeSelection, previous, next);
-        
+
         mainPane.setCenter(table);
         mainPane.setBottom(hBox);
 
@@ -337,15 +328,15 @@ public class SQLTablePane extends JSONTablePane
     {
         return driver.isClosed();
     }
-    
+
     private TableColumn createColumn(String title, int columnIndex, Class type, boolean showAsJSON)
     {
         TableColumn col = new TableColumn(title);
         col.setStyle("-fx-alignment: CENTER-LEFT;");
         col.setMinWidth(100);
         col.setPrefWidth(200);
-        col.setCellValueFactory((element) -> 
-                                { 
+        col.setCellValueFactory((element) ->
+                                {
                                     Object[] row = (Object[]) ((TableColumn.CellDataFeatures) element).getValue();
                                     return new SimpleObjectProperty(row[columnIndex]);
                                 });
@@ -395,11 +386,11 @@ public class SQLTablePane extends JSONTablePane
                 return "";
             return obj.toString();
         }
-        
+
         public void startEdit()
         {
             super.startEdit();
-            
+
             if (!isEditable())
             {
                 super.cancelEdit();
@@ -419,10 +410,10 @@ public class SQLTablePane extends JSONTablePane
             if (colClass == byte[].class)
             {
                 Button load = new Button("Load New Data");
-                load.setOnAction((evt) -> 
+                load.setOnAction((evt) ->
                                  {
-                                     File selected = fileChooser.showOpenDialog(getScene().getWindow()); 
-                                     if (selected == null) 
+                                     File selected = fileChooser.showOpenDialog(getScene().getWindow());
+                                     if (selected == null)
                                      {
                                          cancelEdit(true);
                                          return;
@@ -432,7 +423,7 @@ public class SQLTablePane extends JSONTablePane
                                      Object[] rowData = (Object[]) table.getItems().get(row);
                                      Object primaryKey = rowData[primaryKeyColumn];
                                      String sql = "update "+tableName+" SET "+colTitle+" = ? where "+primaryKeyColName+" = "+primaryKey;
-                                     
+
                                      SQLDriver.ConnectionWrapper wrapper = null;
                                      try
                                      {
@@ -467,12 +458,12 @@ public class SQLTablePane extends JSONTablePane
                 setGraphic(load);
                 return;
             }
-            
+
             editingField.setText(valueOf(getItem()));
             setGraphic(editingField);
-            editingField.setOnKeyPressed((evt) -> 
-                                         { 
-                                             if (evt.getCode() != KeyCode.ESCAPE) 
+            editingField.setOnKeyPressed((evt) ->
+                                         {
+                                             if (evt.getCode() != KeyCode.ESCAPE)
                                                  return;
                                              cancelEdit(true);
                                          });
@@ -493,12 +484,12 @@ public class SQLTablePane extends JSONTablePane
             if (editingCell == this)
                 editingCell = null;
 
-            if (colClass == byte[].class) 
+            if (colClass == byte[].class)
             {
                 updateItem(getItem(), false);
                 return;
             }
-            
+
             Object currentValue = getItem();
             Object newValue = editingField.getText();
             if (!valueOf(currentValue).equals(valueOf(newValue)))
@@ -513,7 +504,7 @@ public class SQLTablePane extends JSONTablePane
                     {
                         Double.parseDouble(val);
                     }
-                    catch (Exception e) 
+                    catch (Exception e)
                     {
                         showError("Invalid Number format for column", e);
                         val = null;
@@ -533,7 +524,7 @@ public class SQLTablePane extends JSONTablePane
                         Object[] rowData = (Object[]) table.getItems().get(row);
                         Object primaryKey = rowData[primaryKeyColumn];
                         stmt.executeUpdate("update "+tableName+" SET "+colTitle+" = "+val+" where "+primaryKeyColName+" = "+primaryKey);
-                        
+
                         wrapper.commit();
                         pageDisplay.setText("Updated Row "+primaryKey+" to "+val);
 
@@ -560,7 +551,7 @@ public class SQLTablePane extends JSONTablePane
         {
             super.updateItem(item, isEmpty);
 
-            if (colClass == byte[].class) 
+            if (colClass == byte[].class)
             {
                 if (item == null)
                 {
@@ -568,7 +559,7 @@ public class SQLTablePane extends JSONTablePane
                     setText(null);
                     return;
                 }
-                
+
                 byte[] raw = (byte[]) item;
                 try
                 {
@@ -578,24 +569,24 @@ public class SQLTablePane extends JSONTablePane
                     setGraphic(imageView);
                     setText(null);
                 }
-                catch (Exception e) 
+                catch (Exception e)
                 {
                     setGraphic(null);
                     setText("Binary "+raw.length+" bytes");
                 }
                 return;
             }
-                
+
             if (isEditing() && isEditable())
                 editingField.setText(valueOf(item));
-            else 
+            else
             {
                 setGraphic(null);
                 setText(valueOf(item));
             }
         }
     }
-    
+
     public void reloadContent()
     {
         showRows(currentStart, rowsPerPage);
@@ -611,14 +602,14 @@ public class SQLTablePane extends JSONTablePane
         ResultSet rss = null;
         SQLDriver.ConnectionWrapper wrapper = null;
         startRow = Math.max(0, startRow);
-        
+
         try
         {
             if (editingCell != null)
                 editingCell.cancelEdit(true);
 
             wrapper = driver.getConnection(1000);
-            
+
             Connection conn = wrapper.getConnection();
             //Statement good for big rows of BLOBS
             //Statement stmt = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -637,7 +628,7 @@ public class SQLTablePane extends JSONTablePane
             int cols = table.getColumns().size();
             String sqlString = "select "+selectedColumnsList+" from "+tableName+" order by "+primaryKeyColName+" limit "+pageSize+" offset "+startRow;
             rss = stmt.executeQuery(sqlString);
-            
+
             ObservableList rowList = FXCollections.observableArrayList();
             for (int r=0; rss.next(); r++)
             {
@@ -676,7 +667,7 @@ public class SQLTablePane extends JSONTablePane
         }
     }
 
-    class DataViewTable extends TableView 
+    class DataViewTable extends TableView
     {
         DataViewTable()
         {
@@ -703,7 +694,7 @@ public class SQLTablePane extends JSONTablePane
         int lastSlash = s.lastIndexOf("/");
         if (lastSlash < 0)
             return null;
-        
+
         int lastSlash2 = s.lastIndexOf("/", lastSlash-1);
         if (lastSlash2 < 0)
             return null;

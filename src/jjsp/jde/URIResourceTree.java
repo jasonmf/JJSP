@@ -1,57 +1,40 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
+import java.io.File;
+import java.net.URI;
 import java.util.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
-import javafx.scene.paint.*;
-import javafx.scene.text.*;
+import javafx.collections.ObservableList;
+import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
+import javafx.scene.control.cell.TextFieldTreeCell;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 
-import javafx.geometry.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-import javafx.collections.transformation.*;
-
-import jjsp.util.*;
-import jjsp.http.*;
-import jjsp.engine.*;
-
-public class URIResourceTree extends TreeView 
+public class URIResourceTree extends TreeView
 {
     private TreeItem root;
     private ImageIconCache iconCache;
 
     private volatile URI[] allURIs, uriRoots;
-    
+
     private static final int UPDATE_DELAY = 2000;
 
     public URIResourceTree(ImageIconCache iconCache)
@@ -65,19 +48,19 @@ public class URIResourceTree extends TreeView
         setPrefWidth(350);
         setMaxWidth(600);
         setMaxHeight(Double.MAX_VALUE);
-            
+
         root = new TreeItem("Root");
         setRoot(root);
-            
+
         setShowRoot(false);
         root.setExpanded(true);
-        setStyle("-fx-font-size: 14px;"); //Sets the increment and decrement button sizes 
+        setStyle("-fx-font-size: 14px;"); //Sets the increment and decrement button sizes
 
-        setCellFactory((tree) -> 
-                       { 
-                           TextFieldTreeCell result = new TextFieldTreeCell(); 
-                           result.setOnMouseClicked((evt) -> 
-                                                 { 
+        setCellFactory((tree) ->
+                       {
+                           TextFieldTreeCell result = new TextFieldTreeCell();
+                           result.setOnMouseClicked((evt) ->
+                                                 {
                                                      URITreeItem item = (URITreeItem) result.getTreeItem();
                                                      if (evt.getClickCount() >= 2)
                                                      {
@@ -87,7 +70,7 @@ public class URIResourceTree extends TreeView
                                                              item.forceUpdate();
                                                      }
                                                  });
-                        
+
                            result.setContextMenu(new TreeContextMenu(result));
                            return result;
                        });
@@ -106,15 +89,15 @@ public class URIResourceTree extends TreeView
         TreeContextMenu(TextFieldTreeCell treeCell)
         {
             this.treeCell = treeCell;
-            
+
             openWeb = new MenuItem("Open in Web View");
-            openWeb.setOnAction((evt) -> showItem(getURI()) ); 
+            openWeb.setOnAction((evt) -> showItem(getURI()) );
             removeURI = new MenuItem("Remove from Tree");
-            removeURI.setOnAction((evt) -> removeURI(getURI()) ); 
+            removeURI.setOnAction((evt) -> removeURI(getURI()) );
             open = new MenuItem("Open View");
-            open.setOnAction((evt) -> showItem(getURI()) ); 
+            open.setOnAction((evt) -> showItem(getURI()) );
             copyFilename = new MenuItem("Copy Name");
-            copyFilename.setOnAction((evt) -> 
+            copyFilename.setOnAction((evt) ->
                                      {
                                          Clipboard clipboard = Clipboard.getSystemClipboard();
                                          ClipboardContent content = new ClipboardContent();
@@ -123,14 +106,14 @@ public class URIResourceTree extends TreeView
                                      });
 
             unmountDir = new MenuItem("Remove Directory from Tree");
-            unmountDir.setOnAction((evt) -> removeURI(getURI()) ); 
+            unmountDir.setOnAction((evt) -> removeURI(getURI()) );
             launchExternalBrowser = new MenuItem("Launch in External Browser");
-            launchExternalBrowser.setOnAction((evt) ->  {try { java.awt.Desktop.getDesktop().browse(getURI()); } catch (Exception e) {}}); 
+            launchExternalBrowser.setOnAction((evt) ->  {try { java.awt.Desktop.getDesktop().browse(getURI()); } catch (Exception e) {}});
 
             openAsText = new MenuItem("Open in Text Editor");
             openAsText.setOnAction((evt) -> showItemAsText(getURI()));
         }
-        
+
         protected URI getURI()
         {
             URITreeItem item = (URITreeItem) treeCell.getTreeItem();
@@ -145,7 +128,7 @@ public class URIResourceTree extends TreeView
             if (uri == null)
                 return false;
 
-            boolean isFile = uri.getScheme().equals("file");   
+            boolean isFile = uri.getScheme().equals("file");
             if (isFile)
             {
                 if (isDirectory(uri))
@@ -164,10 +147,10 @@ public class URIResourceTree extends TreeView
             MenuItem[] additionalItems = additionalPopupItems(uri, treeCell);
             if (additionalItems != null)
                 getItems().addAll(additionalItems);
-            
+
             return true;
         }
-        
+
         public void show(Node anchor, double x, double y)
         {
             if (shouldShow())
@@ -191,12 +174,12 @@ public class URIResourceTree extends TreeView
             return "file:/"+s.substring(8);
         return s;
     }
- 
+
     public static String getLabel(URI uri, String pathLabel)
     {
         if (uri == null)
             return pathLabel;
-        
+
         if (pathLabel == null)
             pathLabel = uri.getPath().trim();
         if (pathLabel.equals("/"))
@@ -233,7 +216,7 @@ public class URIResourceTree extends TreeView
         else
             return uriToString(uri);
     }
-        
+
     public static String getShortLabel(URI uri)
     {
         if (uri == null)
@@ -245,10 +228,10 @@ public class URIResourceTree extends TreeView
         int slash = s.lastIndexOf("/");
         if ((slash >= 0) && (slash < s.length()-1))
             s = s.substring(slash+1);
-        
+
         if (s.length() > 0)
             return s;
-        
+
         return getLabel(uri, "");
     }
 
@@ -278,7 +261,7 @@ public class URIResourceTree extends TreeView
             return null;
         }
     }
-    
+
     public static URI[] getURIPaths(URI uri)
     {
         ArrayList buf = new ArrayList();
@@ -359,7 +342,7 @@ public class URIResourceTree extends TreeView
     {
         if (uri == null)
             return false;
-        
+
         TreeSet ts = new TreeSet();
         for (int i=0; i<allURIs.length; i++)
             ts.add(allURIs[i]);
@@ -402,7 +385,7 @@ public class URIResourceTree extends TreeView
                 ts.add(allURIs[i]);
             else
                 removed = true;
-        
+
         if (!removed)
             return false;
 
@@ -430,11 +413,11 @@ public class URIResourceTree extends TreeView
             else
                 buf.add(uri);
         }
-        
+
         allURIs = new URI[buf.size()];
         buf.toArray(allURIs);
     }
-        
+
     protected String getLabelFor(URI uri)
     {
         for (int i=0; i<uriRoots.length; i++)
@@ -477,7 +460,7 @@ public class URIResourceTree extends TreeView
             }
         }
         catch (Exception e) {}
-            
+
         for (int i=0; i<allURIs.length; i++)
         {
             URI[] paths = getURIPaths(allURIs[i]);
@@ -487,10 +470,10 @@ public class URIResourceTree extends TreeView
                     continue;
 
                 buf.add(paths[j+1]);
-                break;    
+                break;
             }
         }
-            
+
         URI[] result = new URI[buf.size()];
         buf.toArray(result);
         return result;
@@ -512,11 +495,11 @@ public class URIResourceTree extends TreeView
     {
         return !isDirectory(uri) || uri.getScheme().startsWith("http");
     }
-        
+
     protected void showItem(URI uri)
     {
     }
-   
+
     protected void showItemAsText(URI uri)
     {
     }
@@ -582,16 +565,16 @@ public class URIResourceTree extends TreeView
         {
             URITreeItem tt = (URITreeItem) ll.get(i);
             URI startURI = tt.getURI();
-            
+
             for (int j=0; j<path.length; j++)
             {
                 if (!path[j].equals(startURI))
                     continue;
-                
+
                 URITreeItem item = tt.find(path, j, true);
                 if (item == null)
                     item = tt;
-                
+
                 int displayIndex = getDisplayRowOf(item);
                 if (displayIndex >= 0)
                 {
@@ -611,11 +594,11 @@ public class URIResourceTree extends TreeView
         for (int i=ll.size()-1; i>=0; i--)
             ((URITreeItem) ll.get(i)).forceUpdate();
     }
-        
+
     public void rescanTree()
     {
         removeDeletedFileURIs();
-            
+
         URI[] roots = getURIRoots();
         ObservableList ll = root.getChildren();
 
@@ -653,12 +636,12 @@ public class URIResourceTree extends TreeView
         String s2 = uriToString(uri2).toLowerCase();
         boolean http1 = s1.startsWith("http");
         boolean http2 = s2.startsWith("http");
-        
+
         if (!http1 && !http2)
         {
             boolean dir1 = isDirectory(uri1);
             boolean dir2 = isDirectory(uri2);
-            
+
             if (dir1 && !dir2)
                 return -1;
             else if (!dir1 && dir2)
@@ -676,13 +659,13 @@ public class URIResourceTree extends TreeView
     private void addChildInLexographicOrder(ObservableList ll, URITreeItem newChild)
     {
         URI childURI = newChild.uri;
-            
+
         for (int i=0; i<ll.size(); i++)
         {
             URITreeItem next = (URITreeItem) ll.get(i);
             if (compare(childURI, next.uri) > 0)
                 continue;
-                        
+
             ll.add(i, newChild);
             return;
         }
@@ -727,10 +710,10 @@ public class URIResourceTree extends TreeView
                         return result;
                 }
             }
-            
+
             return null;
         }
-        
+
 
         public URI getURI()
         {
@@ -757,8 +740,8 @@ public class URIResourceTree extends TreeView
                 isLeaf = !isDirectory(uri) || (uris.length == 0);
                 alignChildrenToList(super.getChildren(), uris);
             }
-            
-            return super.getChildren();            
+
+            return super.getChildren();
         }
 
         void forceUpdate()
@@ -777,7 +760,7 @@ public class URIResourceTree extends TreeView
             for (int i=0; i<cc.size(); i++)
                 ((URITreeItem) cc.get(i)).forceUpdate();
         }
-            
+
         void rescanNode()
         {
             if (!isExpanded())

@@ -1,58 +1,37 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.nio.file.*;
-import java.lang.reflect.*;
-import java.util.function.*;
-import java.util.*;
-
-import java.awt.Graphics2D;
-import java.awt.image.*;
-
-import javax.script.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
-import javafx.scene.text.*;
+import java.net.URI;
+import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.transform.*;
-import javafx.scene.web.*;
-import javafx.scene.effect.*;
-
-import javafx.geometry.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-
-import jjsp.engine.*;
-import jjsp.util.*;
-import jjsp.http.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.transform.Transform;
 
 public class URITabPane extends TabPane
 {
@@ -76,7 +55,7 @@ public class URITabPane extends TabPane
         getSelectionModel().selectedItemProperty().addListener((obj, oldTab, newTab) -> tabSelectionChanged(oldTab, newTab));
         setStyle("-fx-open-tab-animation: NONE; -fx-close-tab-animation: NONE;");
 
-        setOnMousePressed((evt) -> 
+        setOnMousePressed((evt) ->
                           {
                               Tab tt = getSelectionModel().getSelectedItem();
                               if (tt != null)
@@ -93,12 +72,12 @@ public class URITabPane extends TabPane
                            {
                                int dragFromIndex = -1;
                                int dragToIndex = -1;
-                               
+
                                ObservableList tabs = getTabs();
                                for (int i=0; i<tabs.size(); i++)
                                {
                                    URITab tt = (URITab) tabs.get(i);
-                                   
+
                                    if (tt.isDropIndicatorShowing())
                                        dragToIndex = i;
                                    if (tt == draggingTab)
@@ -120,7 +99,7 @@ public class URITabPane extends TabPane
                                draggingTab = null;
                            });
 
-        setOnMouseDragged(evt -> 
+        setOnMouseDragged(evt ->
                           {
                               if (draggingTab == null)
                                   return;
@@ -128,7 +107,7 @@ public class URITabPane extends TabPane
                               double h1 = ((Region) draggingTab.getContent()).getHeight();
                               double tabHeaderHeight = getHeight() - h1;
                               dragImageView.relocate(evt.getX(), tabHeaderHeight);
-                              
+
                               SingleSelectionModel sm = getSelectionModel();
                               ObservableList tabs = getTabs();
 
@@ -138,7 +117,7 @@ public class URITabPane extends TabPane
                                   Bounds b2 = tt.getGraphic().getLayoutBounds();
                                   Transform tfm2 = tt.getGraphic().getLocalToSceneTransform();
                                   b2 = tfm2.transform(b2);
-                                  
+
                                   boolean isHoveringOver = b2.contains(evt.getSceneX(), b2.getMinY() + b2.getHeight()/2);
 
                                   if (draggingTab != tt)
@@ -157,14 +136,14 @@ public class URITabPane extends TabPane
     {
         if (newTab == null)
             selectedComponentChanged(null);
-        else 
+        else
             selectedComponentChanged((JDEComponent) newTab.getContent());
     }
 
     protected void selectedComponentChanged(JDEComponent jde)
     {
     }
-        
+
     public URITab getTabByURI(URI uri)
     {
         if (uri == null)
@@ -180,7 +159,7 @@ public class URITabPane extends TabPane
 
         return null;
     }
-    
+
     public JDEComponent getJDEComponentByURI(URI uri)
     {
         Tab tt = getTabByURI(uri);
@@ -188,7 +167,7 @@ public class URITabPane extends TabPane
             return null;
         return (JDEComponent) tt.getContent();
     }
-    
+
     public JDEComponent[] getJDEComponents()
     {
         ObservableList<Tab> tabs = getTabs();
@@ -197,7 +176,7 @@ public class URITabPane extends TabPane
             result[i] = (JDEComponent) tabs.get(i).getContent();
         return result;
     }
-    
+
     public URI[] getJDEComponentURIs()
     {
         JDEComponent[] comps = getJDEComponents();
@@ -206,7 +185,7 @@ public class URITabPane extends TabPane
             result[i] = comps[i].getURI();
         return result;
     }
-    
+
     protected void refreshTab(boolean hasGainedFocus, boolean isDisplayed, boolean wasUpdated, Tab tab, JDEComponent jde)
     {
     }
@@ -243,7 +222,7 @@ public class URITabPane extends TabPane
         private BorderPane iconBox, mainMarker;
         private CustomGraphic tabHeader;
         private boolean isDropIndicatorShowing, showingError, hasGainedFocus, hasFocus, isMainProject;
-        
+
         public URITab(JDEComponent jde)
         {
             this.jdeComponent = jde;
@@ -339,11 +318,11 @@ public class URITabPane extends TabPane
                     labelText.setFill(Color.GREEN);
                 else
                     labelText.setFill(Color.MAGENTA);
-                
+
                 tabHeader.currentURI = uri;
                 wasUpdated = true;
             }
-            
+
             if (jdeComponent.isShowingError() != showingError)
             {
                 showingError = jdeComponent.isShowingError();
@@ -376,7 +355,7 @@ public class URITabPane extends TabPane
 
             hasGainedFocus = !hasFocus && hasFocusNow;
             hasFocus = hasFocusNow;
-                
+
             return wasUpdated;
         }
 
@@ -407,26 +386,26 @@ public class URITabPane extends TabPane
 
                 setAlignment(Pos.BOTTOM_CENTER);
 
-                setOnMousePressed((evt) -> 
+                setOnMousePressed((evt) ->
                                   {
                                       pressPoint = evt.getX();
                                   });
 
-                setOnMouseDragged(evt -> 
+                setOnMouseDragged(evt ->
                                   {
                                       if ((Math.abs(evt.getX() - pressPoint) < 10) || (draggingTab != null))
                                           return;
-                                  
+
                                       SnapshotParameters snapParams = new SnapshotParameters();
                                       snapParams.setTransform(Transform.scale(0.4, 0.4));
-                                  
+
                                       ImageView im = new ImageView();
                                       im.setImage(getContent().snapshot(snapParams, null));
                                       dragImageView.setCenter(im);
-                                  
+
                                       URITabPane.this.getChildren().add(dragImageView);
                                       draggingTab = URITab.this;
-                                  
+
                                       double h1 = ((Region) draggingTab.getContent()).getHeight();
                                       dragImageView.relocate(evt.getX(), URITabPane.this.getHeight() - h1);
                                   });
@@ -438,7 +417,7 @@ public class URITabPane extends TabPane
             TabContextMenu()
             {
                 MenuItem moveToLeft = new MenuItem("Move Left <<");
-                moveToLeft.setOnAction((evt) -> moveTabLeft(URITabPane.URITab.this)); 
+                moveToLeft.setOnAction((evt) -> moveTabLeft(URITabPane.URITab.this));
                 MenuItem moveToRight = new MenuItem("Move Right >>");
                 moveToRight.setOnAction((evt) -> moveTabRight(URITabPane.URITab.this));
                 MenuItem clearError = new MenuItem("Clear Error");
@@ -451,7 +430,7 @@ public class URITabPane extends TabPane
     }
 
     public void clearMainMarkers()
-    {      
+    {
         ObservableList<Tab> tabs = getTabs();
 
         for (int i=tabs.size()-1; i>=0; i--)
@@ -462,7 +441,7 @@ public class URITabPane extends TabPane
     }
 
     public URITab getMainMarkedTab()
-    {      
+    {
         ObservableList<Tab> tabs = getTabs();
 
         for (int i=tabs.size()-1; i>=0; i--)
@@ -471,7 +450,7 @@ public class URITabPane extends TabPane
             if (tt.markedAsMain())
                 return tt;
         }
-        
+
         return null;
     }
 
@@ -506,7 +485,7 @@ public class URITabPane extends TabPane
         if (uri == null)
             return null;
 
-        String ss = URIResourceTree.uriToString(uri);        
+        String ss = URIResourceTree.uriToString(uri);
         ObservableList<Tab> tabs = getTabs();
 
         for (int i=tabs.size()-1; i>=0; i--)
@@ -523,7 +502,7 @@ public class URITabPane extends TabPane
 
         return null;
     }
-    
+
     public Tab showTab(URI uri)
     {
         Tab tt = getTabByURI(uri);
@@ -542,7 +521,7 @@ public class URITabPane extends TabPane
 
         refreshTab(false, true, true, tab, jde);
         return jde;
-    } 
+    }
 
     public URITab getSelectedTab()
     {

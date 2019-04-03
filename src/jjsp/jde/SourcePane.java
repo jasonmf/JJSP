@@ -17,36 +17,29 @@ this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.*;
-import java.io.*;
-import java.nio.file.*;
-import java.lang.reflect.*;
 import java.util.*;
-import java.util.logging.*;
-import javax.script.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
-import javafx.scene.paint.*;
-import javafx.scene.text.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
-
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.geometry.*;
-import javafx.util.*;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.*;
-import javafx.collections.*;
-
+import javax.script.ScriptException;
 import jjsp.engine.*;
-import jjsp.util.*;
-import jjsp.http.*;
-import jjsp.http.filters.*;
+import jjsp.http.HTTPServer;
+import jjsp.http.HTTPServerLogger;
+import jjsp.util.Args;
+import jjsp.util.Utils;
 
 public class SourcePane extends JDETextEditor
 {
