@@ -1,60 +1,39 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.util;
 
-import java.awt.*;
-import java.net.*;
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-
+import java.awt.Graphics2D;
 import java.awt.image.*;
-import javax.swing.*;
-import javax.imageio.*;
-
-import javax.script.*;
-import javax.swing.text.html.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.BitSet;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.paint.*;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
-
-import javafx.geometry.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-
-import jjsp.engine.*;
-import jjsp.util.*;
-import jjsp.http.*;
-
+import javafx.stage.Stage;
+import javax.imageio.ImageIO;
 
 public class IconUtils
 {
@@ -79,7 +58,7 @@ public class IconUtils
         {
             if (images[i].getWidth() == idealWidth)
                 return images[i];
-            
+
             if (images[i].getWidth() > largest.getWidth())
                 largest = images[i];
         }
@@ -88,7 +67,7 @@ public class IconUtils
             return null;
 
         int idealHeight = (int) (largest.getHeight()*idealWidth/largest.getWidth());
-        
+
         BufferedImage bim = javafx.embed.swing.SwingFXUtils.fromFXImage(largest, null);
         BufferedImage bim2 = new BufferedImage(idealWidth, idealHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = bim2.createGraphics();
@@ -113,12 +92,12 @@ public class IconUtils
 
         if (largest.getWidth() == 0)
             return null;
-        
+
         BufferedImage bim = javafx.embed.swing.SwingFXUtils.fromFXImage(largest, null);
         return javafx.embed.swing.SwingFXUtils.toFXImage(bim, null);
     }
 
-    public static Image[] readImagesFromICO(byte[] icoData) 
+    public static Image[] readImagesFromICO(byte[] icoData)
     {
         ByteBuffer bb = ByteBuffer.wrap(icoData);
         bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -131,11 +110,11 @@ public class IconUtils
         int number = bb.getShort();
         if (number <= 0)
             return null;
-        
+
         int maxSize = 0;
         ArrayList buf = new ArrayList();
         BufferedImage result = null;
-        
+
         ImageHeader[] hdrs = new ImageHeader[number];
         for (int i=0; i<number; i++)
         {
@@ -156,7 +135,7 @@ public class IconUtils
             hdrs[i].offset = bb.getInt();
         }
 
-        for (int pos=0; pos<number; pos++) 
+        for (int pos=0; pos<number; pos++)
         {
             ImageHeader hdr = hdrs[pos];
             short type = bb.getShort();
@@ -178,9 +157,9 @@ public class IconUtils
                 //Adjust for optional colour mask
                 bb.position(hdr.offset + 16);
                 if (bb.getInt() == 3||bb.getInt() == 6)
-                    bmpheaderlength = bmpheaderlength + 16; 
+                    bmpheaderlength = bmpheaderlength + 16;
                 //Get color table if necessary
-                byte[] aaa = new byte[1]; 
+                byte[] aaa = new byte[1];
                 IndexColorModel cm = new IndexColorModel(1,1,aaa,aaa,aaa);
                 int numColors = 0;
                 if (hdr.bitsPerPixel == 1 || hdr.bitsPerPixel == 2 || hdr.bitsPerPixel == 4 || hdr.bitsPerPixel == 8)
@@ -323,15 +302,15 @@ public class IconUtils
                     catch (Exception e) {}
                 }
             }
-            
+
             bb.position(hdr.offset + hdr.dataSize);
             if (im != null)
                 buf.add(javafx.embed.swing.SwingFXUtils.toFXImage(im, null));
         }
-        
+
         Image[] images = new Image[buf.size()];
         buf.toArray(images);
-        
+
         return images;
     }
 
@@ -360,7 +339,7 @@ public class IconUtils
         int paddingOffset = 0;
         for (int i=0;i<hdr.height;i++)
         {
-            for (int j = 0; j < hdr.width; j++) 
+            for (int j = 0; j < hdr.width; j++)
                 alpha.setSample(j, hdr.height - i - 1, 0, reverse.get(i * hdr.width + j + paddingOffset) ? 0 : 0xffffffff);
             if (isPadded == true)
                 paddingOffset += 16;

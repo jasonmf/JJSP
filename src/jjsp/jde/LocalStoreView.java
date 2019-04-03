@@ -1,52 +1,47 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.nio.file.*;
-import java.lang.reflect.*;
-import java.util.*;
-import javax.script.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.property.*;
-import javafx.beans.value.*;
-import javafx.scene.paint.*;
-import javafx.scene.text.*;
+import java.io.ByteArrayInputStream;
+import java.util.List;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyLongWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Side;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
-
-import javafx.geometry.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-
-import jjsp.http.*;
-import jjsp.engine.*;
-import jjsp.util.*;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.web.WebView;
+import javafx.stage.Stage;
+import javafx.util.Callback;
+import jjsp.engine.Environment;
+import jjsp.http.HTTPHeaders;
+import jjsp.util.Utils;
 
 public class LocalStoreView extends BorderPane
 {
@@ -83,7 +78,7 @@ public class LocalStoreView extends BorderPane
         detailsPane.requestFocus();
     }
 
-    class LocalStoreTable extends TableView 
+    class LocalStoreTable extends TableView
     {
         private volatile Environment jenv;
         private ObservableList logList;
@@ -93,20 +88,20 @@ public class LocalStoreView extends BorderPane
             setEditable(false);
             logList = FXCollections.observableArrayList();
             setItems(logList);
-            
-            TableColumn name = createColumn("Resource Name", 150, 300, (element) -> 
-                                     { 
+
+            TableColumn name = createColumn("Resource Name", 150, 300, (element) ->
+                                     {
                                          String resourceName = (String) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyStringWrapper(resourceName); 
+                                         return new ReadOnlyStringWrapper(resourceName);
                                      });
 
-            TableColumn size = createColumn("Size in bytes", 50, 100, (element) -> 
-                                     { 
+            TableColumn size = createColumn("Size in bytes", 50, 100, (element) ->
+                                     {
                                          String resourceName = (String) ((TableColumn.CellDataFeatures) element).getValue();
                                          byte[] data = jenv.getLocal(resourceName);
                                          if (data == null)
                                              return new ReadOnlyLongWrapper(0);
-                                         return new ReadOnlyLongWrapper(data.length); 
+                                         return new ReadOnlyLongWrapper(data.length);
                                      });
             size.setStyle("-fx-alignment: CENTER-RIGHT;");
 
@@ -125,10 +120,10 @@ public class LocalStoreView extends BorderPane
                 return;
 
             Object target = logList.get(ll.get(0));
-            
+
             byte[] data = jenv.getLocal(target.toString());
             String textVersion = Utils.toAsciiString(data);
-            
+
             MenuItem openWeb = new MenuItem("Show in Web View");
             openWeb.setOnAction((evt1) ->
                                 {
@@ -136,7 +131,7 @@ public class LocalStoreView extends BorderPane
                                     detailsPane.setCenter(webView);
                                     webView.getEngine().loadContent(textVersion);
                                 });
-            
+
             MenuItem openRaw = new MenuItem("Show Raw Text");
             openRaw.setOnAction((evt1) ->
                                 {
@@ -178,20 +173,20 @@ public class LocalStoreView extends BorderPane
             }
             else
                 result.setPrefWidth(prefWidth);
-                
+
             result.setStyle("-fx-alignment: CENTER-LEFT;");
             result.setCellValueFactory(cb);
 
             result.setCellFactory((column) ->
                                   {
                                       TextFieldTableCell cell = new TextFieldTableCell();
-                                      
+
                                       cell.setOnMousePressed(evt -> showContextMenu(evt, cell));
                                       cell.setOnMouseReleased(evt -> showContextMenu(evt, cell));
-                                      
+
                                       return cell;
                                   });
-            
+
             return result;
         }
 
@@ -203,7 +198,7 @@ public class LocalStoreView extends BorderPane
             if (data == null)
                 return;
 
-            String textVersion = Utils.toAsciiString(data);            
+            String textVersion = Utils.toAsciiString(data);
             String mime = HTTPHeaders.guessMIMEType(resourceName);
 
             if ((mime.indexOf("html") >= 0) || textVersion.toLowerCase().indexOf("<html>") >= 0)
@@ -211,13 +206,13 @@ public class LocalStoreView extends BorderPane
 //                WebView webView = new WebView();
 //                detailsPane.setCenter(webView);
 //                webView.getEngine().loadContent(textVersion);
-                
+
                 String contents = "";
                 contents = textVersion;
                 TextArea editor = new TextArea(contents);
                 editor.setEditable(false);
                 editor.setFont(Font.font("monospaced", FontWeight.NORMAL, 12));
-                
+
                 detailsPane.setCenter(editor);
             }
             else if (resourceName.endsWith(".svg"))
@@ -234,14 +229,14 @@ public class LocalStoreView extends BorderPane
             else if (mime.startsWith("image"))
             {
                 Image im = new Image(new ByteArrayInputStream(data));
-                
+
                 ImageView iv = new ImageView(im);
 
-                iv.fitWidthProperty().bind(detailsPane.widthProperty().subtract(15)); 
+                iv.fitWidthProperty().bind(detailsPane.widthProperty().subtract(15));
                 //iv.setFitWidth(200);
                 iv.setPreserveRatio(true);
                 iv.setSmooth(true);
-                
+
                 BorderPane bp = new BorderPane();
                 bp.setStyle("-fx-border-width: 2px; -fx-border-color: #0052A3");
                 bp.setCenter(iv);
@@ -249,7 +244,7 @@ public class LocalStoreView extends BorderPane
                 ScrollPane sp = new ScrollPane(bp);
                 detailsPane.setCenter(sp);
             }
-            else 
+            else
             {
                 String contents = "";
                 if (mime.startsWith("text") || resourceName.endsWith(".js") || (mime.indexOf("json") >= 0) || (mime.indexOf("css") >= 0))
@@ -266,7 +261,7 @@ public class LocalStoreView extends BorderPane
                 TextArea editor = new TextArea(contents);
                 editor.setEditable(false);
                 editor.setFont(Font.font("monospaced", FontWeight.NORMAL, 12));
-                
+
                 detailsPane.setCenter(editor);
             }
         }

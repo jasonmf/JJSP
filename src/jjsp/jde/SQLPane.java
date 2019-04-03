@@ -1,51 +1,42 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.sql.*; 
-import java.nio.file.*;
-import java.lang.reflect.*;
-import java.util.*;
-import javax.script.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
-import javafx.beans.property.*;
-import javafx.scene.paint.*;
-import javafx.scene.text.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
-
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URI;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Properties;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-
-import jjsp.engine.*;
-import jjsp.util.*;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import jjsp.engine.SQLDriver;
 
 public class SQLPane extends JDETextEditor
 {
@@ -83,7 +74,7 @@ public class SQLPane extends JDETextEditor
 
         outputTabs = new TabPane();
         outputTabs.setSide(Side.BOTTOM);
-        outputTabs.setOnMousePressed((evt) -> 
+        outputTabs.setOnMousePressed((evt) ->
                           {
                               Tab tt = outputTabs.getSelectionModel().getSelectedItem();
                               if (tt != null)
@@ -122,11 +113,11 @@ public class SQLPane extends JDETextEditor
         mainSplit.setOrientation(Orientation.VERTICAL);
         mainSplit.setDividerPosition(0, 0.40);
         mainSplit.getItems().addAll(top, bottom);
-        
+
         setCenter(mainSplit);
         loadFromURI();
     }
-    
+
     public boolean isMySQL()
     {
         return fullConnectionString.indexOf("com.mysql.jdbc.Driver") >= 0;
@@ -149,8 +140,8 @@ public class SQLPane extends JDETextEditor
         disconnect.setOnAction((evt)-> closeServices());
 
         MenuItem showTables = new MenuItem("Launch Table Views");
-        showTables.setOnAction((evt)-> 
-                               { 
+        showTables.setOnAction((evt)->
+                               {
                                    ResultSet rss = null;
                                    SQLDriver.ConnectionWrapper wrapper = null;
                                    try
@@ -175,7 +166,7 @@ public class SQLPane extends JDETextEditor
 
                                        ArrayList buf = new ArrayList();
                                        Statement stmt = wrapper.getStatement();
-                                       
+
                                        if (isPostgres())
                                            rss = stmt.executeQuery("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
                                        else
@@ -223,7 +214,7 @@ public class SQLPane extends JDETextEditor
             ((Node) tt.getContent()).requestFocus();
         super.requestFocus();
     }
-    
+
     public SQLDriver getDriver()
     {
         if ((driver == null) || driver.isClosed())
@@ -269,7 +260,7 @@ public class SQLPane extends JDETextEditor
     protected void connect(String driverName, String databaseURL, String user, String password) throws Exception
     {
         closeServices();
-        
+
         Properties props = new Properties();
         props.put("user", user);
         props.put("password", password);
@@ -287,12 +278,12 @@ public class SQLPane extends JDETextEditor
         int index = src.toLowerCase().indexOf(key);
         if (index < 0)
             return null;
-        
+
         return src.substring(index+key.length()).trim();
     }
 
     private String extractParameterFromComments(String key, SQLHighlighter.StatementText[] comments)
-    { 
+    {
         String result = null;
         for (int i=0; i<comments.length; i++)
         {
@@ -301,27 +292,27 @@ public class SQLPane extends JDETextEditor
             if (value != null)
                 result = value;
         }
-        
+
         return result;
     }
 
     protected boolean connectWithScriptParameters(PrintWriter report) throws Exception
     {
         SQLHighlighter.StatementText[] comments = ((SQLEditor) editor).getComments();
-        
+
         String databaseURL = extractParameterFromComments("url:", comments);
         if (databaseURL == null)
             databaseURL = extractParameterFromComments("database:", comments);
-            
+
         String user = extractParameterFromComments("user:", comments);
         if (user == null)
             user = extractParameterFromComments("username:", comments);
-        
+
         String password = extractParameterFromComments("password:", comments);
         String driverName = extractParameterFromComments("driver:", comments);
         if (driverName == null)
             driverName = "com.mysql.jdbc.Driver";
-        
+
         if ((databaseURL != null) && (user != null) && (password != null) && (driverName != null))
         {
             String conn = "    Diver: "+driverName+"\n    Databse URL: "+databaseURL+"\n    User: "+user+"\n    Password: "+password;
@@ -334,7 +325,7 @@ public class SQLPane extends JDETextEditor
                 connect(driverName, databaseURL, user, password);
                 fullConnectionString = conn;
             }
-                
+
             connectionStatus.setText(fullConnectionString);
             if (report != null)
                 report.println("Connected to DB");
@@ -369,10 +360,10 @@ public class SQLPane extends JDETextEditor
                 setStatus(sw.toString(), null);
                 return;
             }
-        
+
             report.println(fullConnectionString);
             outputTabs.getTabs().setAll(outputTabs.getTabs().get(0));
- 
+
             report.println("Execution Task started: "+new java.util.Date()+"\n");
             report.println("JJSP Version "+getVersion()+"\n");
             wrapper = driver.getConnection(5000);
@@ -389,23 +380,23 @@ public class SQLPane extends JDETextEditor
 
                 ResultSet rss = stmt.getResultSet();
                 ResultSetView tableView = new ResultSetView(rss, 1024);
-                
+
                 report.println("["+current+"]  OK (results displayed on tab "+(cmdLine+1)+"  with "+tableView.rowList.size()+" rows)");
                 Tab tab = new Tab("Results "+(cmdLine+1)+" ("+tableView.rowList.size()+" rows)");
                 tab.setContent(tableView);
                 outputTabs.getTabs().addAll(tab);
-                
+
                 rss.close();
             }
 
             report.close();
             setStatus(sw.toString(), null);
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             report.println("Error executing SQL statement '"+current+"'");
             report.close();
-            
+
             setStatus(sw.toString(), e);
             if (current != null)
             {
@@ -420,7 +411,7 @@ public class SQLPane extends JDETextEditor
         }
     }
 
-    public void setStatus(String message, Throwable t) 
+    public void setStatus(String message, Throwable t)
     {
         if (t != null)
         {
@@ -430,7 +421,7 @@ public class SQLPane extends JDETextEditor
         }
         else
             statusOutput.setText(message);
-        
+
         super.setStatus(message, t);
     }
 
@@ -470,11 +461,11 @@ public class SQLPane extends JDETextEditor
         TextField userName = new TextField(defaultUser);
         TextField password = new TextField(pw);
         password.setOnAction((evt) -> ok.fire());
-            
+
         GridPane gp = new GridPane();
         gp.setHgap(10);
         gp.setVgap(10);
-            
+
         gp.add(new Label("Database URL"), 0, 0);
         gp.add(dbURL, 1, 0);
         gp.add(new Label("Driver Name"), 0, 1);
@@ -484,9 +475,9 @@ public class SQLPane extends JDETextEditor
         gp.add(new Label("Password"), 0, 3);
         gp.add(password, 1, 3);
 
-        ok.setOnAction((evt) -> 
-                       { 
-                           dialogStage.close(); 
+        ok.setOnAction((evt) ->
+                       {
+                           dialogStage.close();
                            try
                            {
                                String fullConnectionString = "    Diver: "+driverName.getText()+"\n    Databse URL: "+ dbURL.getText()+"\n    User: "+userName.getText()+"\n    Password: "+password.getText();
@@ -506,12 +497,12 @@ public class SQLPane extends JDETextEditor
         BorderPane.setMargin(hBox, new Insets(10,0,0,0));
         hBox.setAlignment(Pos.BASELINE_CENTER);
         hBox.getChildren().addAll(ok, cancel);
-            
+
         BorderPane bp = new BorderPane();
         bp.setStyle("-fx-font-size: 16px; -fx-padding:10px");
         bp.setCenter(gp);
         bp.setBottom(hBox);
-            
+
         dialogStage.setTitle("Connect to Database");
         dialogStage.setScene(new Scene(bp));
         if (ImageIconCache.getJJSPImage() != null)
@@ -524,7 +515,7 @@ public class SQLPane extends JDETextEditor
     class ResultSetView extends JSONTablePane
     {
         ObservableList rowList;
-        
+
         ResultSetView(ResultSet rss, int maxRows) throws Exception
         {
             super(null);
@@ -554,7 +545,7 @@ public class SQLPane extends JDETextEditor
 
                 rowList.add(row);
             }
-            
+
             table.setItems(rowList);
             mainPane.setCenter(table);
         }
@@ -563,13 +554,13 @@ public class SQLPane extends JDETextEditor
         {
             TableColumn col = new TableColumn(title);
             col.setStyle("-fx-alignment: CENTER-LEFT;");
-            col.setCellValueFactory((element) -> 
-                                    { 
+            col.setCellValueFactory((element) ->
+                                    {
                                          Object[] row = (Object[]) ((TableColumn.CellDataFeatures) element).getValue();
                                          Object cellValue = row[columnIndex];
                                          if (cellValue == null)
                                              return null;
-                                         return new ReadOnlyStringWrapper(cellValue.toString()); 
+                                         return new ReadOnlyStringWrapper(cellValue.toString());
                                      });
 
             col.setCellFactory((cell) -> { return new JSONTableCell("Cell Contents For: "+title);});

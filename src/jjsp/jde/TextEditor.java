@@ -1,55 +1,41 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
-import javafx.scene.canvas.*;
-import javafx.scene.effect.*;
-import javafx.scene.shape.*;
-import javafx.scene.text.*;
-import javafx.scene.input.*;
-import javafx.scene.paint.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.web.*;
+import java.util.ArrayList;
+import javafx.application.Platform;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.*;
-import javafx.animation.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-import javafx.concurrent.Worker.*;
+import javafx.scene.Cursor;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.input.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import jjsp.util.Utils;
 
-import netscape.javascript.*;
-
-import jjsp.util.*;
-
-public class TextEditor extends BorderPane 
+public class TextEditor extends BorderPane
 {
     public static final double SCROLL_GAIN = 2.4;
     public static final long SCROLL_RATE_PAUSE = 100;
@@ -62,7 +48,7 @@ public class TextEditor extends BorderPane
     private SharedTextEditorState sharedState;
     private int lineHeight, charWidth, fontBaseline, lineNumberMargin, scrollBarWidth;
     private Color textColour, selectionColour, caretColour, lineNumberColour, lineNumberMarginColour;
-    
+
     private volatile boolean disposed, isShowing;
 
     public TextEditor(int fontSize)
@@ -84,7 +70,7 @@ public class TextEditor extends BorderPane
         selectionColour = Color.rgb(230, 200, 255);
 
         setCursor(Cursor.TEXT);
-            
+
         scrollBar = new EditorScrollBar(fontSize);
         setRight(scrollBar);
         BorderPane.setAlignment(scrollBar, Pos.TOP_RIGHT);
@@ -100,14 +86,14 @@ public class TextEditor extends BorderPane
 
         sharedState = new SharedTextEditorState();
 
-        layoutBoundsProperty().addListener((obs, oldVal, newVal) -> 
+        layoutBoundsProperty().addListener((obs, oldVal, newVal) ->
                                            {
                                                BoundingBox vp = (BoundingBox) newVal;
-            
+
                                                editor.setWidth(vp.getWidth() - scrollBarWidth);
                                                editor.setHeight(vp.getHeight());
                                                editor.caret.showing = true;
-                                               
+
                                                editor.doLayout();
                                                scrollBar.configureBar();
                                                editor.drawText();
@@ -129,7 +115,7 @@ public class TextEditor extends BorderPane
     {
         setFontSize(fontSize, Math.max(fontSize - 18, 0) + 10);
     }
-    
+
     public void setFontSize(int fontSize, int width)
     {
         lineHeight = fontSize+2;
@@ -188,7 +174,7 @@ public class TextEditor extends BorderPane
     {
         return editable;
     }
-    
+
     public void setEditable(boolean value)
     {
         editable = value;
@@ -298,7 +284,7 @@ public class TextEditor extends BorderPane
     {
         highlightLines(lineNumber, lineNumber);
     }
-    
+
     protected void textSelected(String selection)
     {
     }
@@ -351,7 +337,7 @@ public class TextEditor extends BorderPane
             setMinWidth(size);
             setMaxWidth(size);
             setPrefWidth(size);
-            setStyle("-fx-font-size: "+size+"px;"); //Sets the increment and decrement button sizes  
+            setStyle("-fx-font-size: "+size+"px;"); //Sets the increment and decrement button sizes
 
             scrollBarWidth = size;
             setUnitIncrement(lineHeight);
@@ -378,12 +364,12 @@ public class TextEditor extends BorderPane
                 setVisibleAmount(scrollBarHeight);
                 double blockIncrement = 100*Math.min(1, Math.max(0, (vpHeight - 2*lineHeight) / Math.max(1, textHeight)));
                 setBlockIncrement(blockIncrement);
-            }  
-            
+            }
+
             textScrolled(getValue());
         }
     }
-    
+
     class EditorCanvas extends Canvas implements EventHandler
     {
         int dragStartPos;
@@ -405,7 +391,7 @@ public class TextEditor extends BorderPane
             editHistory = new ArrayList();
             content = new StringBuffer();
             caret = new CaretAnimator();
-            
+
             addEventHandler(KeyEvent.KEY_PRESSED, this);
             addEventHandler(KeyEvent.KEY_TYPED, this);
 
@@ -415,7 +401,7 @@ public class TextEditor extends BorderPane
 
             addEventHandler(ScrollEvent.SCROLL, this);
             setFocusTraversable(true);
-            
+
             doLayout();
         }
 
@@ -442,7 +428,7 @@ public class TextEditor extends BorderPane
                 editHistoryPosition -= 2;
             }
         }
-        
+
         public boolean redoLastUndo()
         {
             if (editHistoryPosition >= editHistory.size())
@@ -494,7 +480,7 @@ public class TextEditor extends BorderPane
         {
             return getLineForPosition(caret.selectionStart);
         }
-        
+
         public int getHighlightLineEnd()
         {
             return getLineForPosition(caret.selectionEnd);
@@ -560,7 +546,7 @@ public class TextEditor extends BorderPane
                 return -1;
             if (lines[line].yPosition + lines[line].yHeight > getViewportEnd())
                 return 1;
-            
+
             return 0;
         }
 
@@ -648,7 +634,7 @@ public class TextEditor extends BorderPane
 
             int line = 0, lineStartPos=0;
             String content = editor.content.toString();
-            
+
             for (int i=0; i<content.length(); i++)
             {
                 if (content.charAt(i) == '\n')
@@ -656,7 +642,7 @@ public class TextEditor extends BorderPane
                 if (line == lineNumber)
                     return i+1;
             }
-            
+
             return content.length();
         }
 
@@ -672,7 +658,7 @@ public class TextEditor extends BorderPane
             String lowerCaseContent = content.toString().toLowerCase();
             int pos = getCaretPosition();
             int nextIndex = -1;
-            
+
             if (forwards)
             {
                 nextIndex = lowerCaseContent.indexOf(searchFor, Math.max(pos, 0));
@@ -702,7 +688,7 @@ public class TextEditor extends BorderPane
                 return false;
             if (!editable)
                 return false;
-       
+
             caret.alterContent(caret.selectionStart, caret.selectionEnd, caret.selectionStart, newText, caret.selectionStart + newText.length());
             caret.selectionEnd = caret.position;
 
@@ -711,13 +697,13 @@ public class TextEditor extends BorderPane
             contentChanged();
             return true;
         }
-        
+
         public void handle(Event event)
         {
             caret.showing = true;
 
-            if (event instanceof MouseEvent)     
-            {       
+            if (event instanceof MouseEvent)
+            {
                 event.consume();
                 MouseEvent evt = (MouseEvent) event;
                 double mx = evt.getX();
@@ -736,7 +722,7 @@ public class TextEditor extends BorderPane
                         int insertLen = sharedState.lastSelectedText.length();
                         if (insertLen == 0)
                             return;
-                        
+
                         int position = caret.findTextPositionFromScreenPoint(mx, my);
                         position = Math.min(Math.max(0, position), content.length()-1);
                         caret.alterContent(-1, -1, position, sharedState.lastSelectedText, position);
@@ -745,7 +731,7 @@ public class TextEditor extends BorderPane
                             setCaretPosition(caret.position + insertLen);
                         if ((caret.selectionStart >= 0) && (position < caret.selectionStart))
                             setSelectedText(caret.selectionStart + insertLen, caret.selectionEnd + insertLen);
-                                              
+
                         doLayout();
                     }
                     else
@@ -804,7 +790,7 @@ public class TextEditor extends BorderPane
                 KeyEvent evt = (KeyEvent) event;
                 if (caret.handleKeyEvent(evt))
                     event.consume();
-            }   
+            }
             else if (event instanceof ScrollEvent)
             {
                 ScrollEvent evt = (ScrollEvent) event;
@@ -813,7 +799,7 @@ public class TextEditor extends BorderPane
                 scrollBar.setValue(val);
                 event.consume();
             }
-            
+
             drawText();
         }
 
@@ -836,7 +822,7 @@ public class TextEditor extends BorderPane
                 xPosition = 0;
                 autoScrollRate = 0;
 
-                Thread t = new Thread(() -> 
+                Thread t = new Thread(() ->
                                       {
                                           while (!disposed)
                                           {
@@ -845,16 +831,16 @@ public class TextEditor extends BorderPane
                                                   Thread.sleep(SCROLL_RATE_PAUSE);
                                               }
                                               catch (Exception e) {}
-                                              
+
                                               if (isShowing)
                                                   Platform.runLater(CaretAnimator.this);
                                           }
                                       });
-                
+
                 t.setDaemon(true);
                 t.start();
             }
-            
+
             public void run()
             {
                 if (!isShowing || (getScene() == null))
@@ -892,7 +878,7 @@ public class TextEditor extends BorderPane
             {
                 return selectionStart;
             }
-            
+
             public int getCurrentLineIndex()
             {
                 return getLineForPosition(position);
@@ -911,7 +897,7 @@ public class TextEditor extends BorderPane
                         continue;
                     return i;
                 }
-                
+
                 if ((pos < 0) || (lines.length == 0))
                     return -1;
                 return lines.length-1;
@@ -922,7 +908,7 @@ public class TextEditor extends BorderPane
                 int line = getCurrentLineIndex();
                 if (line < lineOffset)
                     return "";
-                
+
                 LineOfText refLine = lines[line-lineOffset];
                 for (int l=line-lineOffset; l>=0; l--)
                 {
@@ -944,7 +930,7 @@ public class TextEditor extends BorderPane
 
                 return sp.toString();
             }
-            
+
             private int getWhitespaceIndentPosition()
             {
                 int line = getCurrentLineIndex();
@@ -968,7 +954,7 @@ public class TextEditor extends BorderPane
                         removeEnd = removeStart + 1;
                     content.delete(removeStart, removeEnd);
                 }
-               
+
                 if ((insertAt >= 0) && (toInsert != null))
                 {
                     if (insertAt >= content.length())
@@ -1016,7 +1002,7 @@ public class TextEditor extends BorderPane
                             return alterContent(lines[line].start + col, position, -1, null, lines[line].start + col);
                     }
                 }
-                
+
                 return false;
             }
 
@@ -1043,7 +1029,7 @@ public class TextEditor extends BorderPane
                                 match = false;
                                 break;
                             }
-                        
+
                         if (match)
                             removeMatchingLinePrefix();
                     }
@@ -1059,7 +1045,7 @@ public class TextEditor extends BorderPane
                 if ((content.length() == 0) || (position < 0))
                     return false;
 
-                KeyCode code = evt.getCode();            
+                KeyCode code = evt.getCode();
                 int newPos = position;
 
                 if ((KeyCode.KP_UP == code) || (KeyCode.UP == code))
@@ -1077,7 +1063,7 @@ public class TextEditor extends BorderPane
                     int line = getCurrentLineIndex();
                     if (line < 0)
                         return true;
-                    
+
                     int col = position - lines[line].start;
                     savedColumn = savedColumn < 0 ? col : savedColumn;
                     if (line < lines.length-1)
@@ -1101,7 +1087,7 @@ public class TextEditor extends BorderPane
                     int line = getCurrentLineIndex();
                     if (line < 0)
                         return true;
-                    
+
                     int topLine = Math.max(0, line - (int) (editor.getHeight()/lineHeight));
                     int col = position - lines[line].start;
                     savedColumn = savedColumn < 0 ? col : savedColumn;
@@ -1167,7 +1153,7 @@ public class TextEditor extends BorderPane
                             position = selectionStart = newPos;
                         else
                             position = newPos;
-                        
+
                         int ss = Math.min(selectionStart, selectionEnd);
                         int mm = Math.max(selectionStart, selectionEnd);
                         selectionStart = ss;
@@ -1179,9 +1165,9 @@ public class TextEditor extends BorderPane
                     clearSelection();
                     position = newPos;
                 }
-                    
+
                 String ss = getSelectedText();
-                if ((ss != null) && (ss.length() > 0))                    
+                if ((ss != null) && (ss.length() > 0))
                     setLastSelection(ss);
                 return true;
             }
@@ -1209,14 +1195,14 @@ public class TextEditor extends BorderPane
 
                     return true;
                 }
-                
+
                 if (evt.getEventType() != KeyEvent.KEY_TYPED)
                 {
                     if (KeyCode.TAB == code)
                         return true;
                     return false;
                 }
-                
+
                 String chString = evt.getCharacter();
                 if ((chString == null) || (chString.length() == 0))
                     return false;
@@ -1267,7 +1253,7 @@ public class TextEditor extends BorderPane
                                 return alterContent(-1, -1, position, toInsert, position + toInsert.length());
                             }
                         }
-                    
+
                         return alterContent(-1, -1, Math.max(0, position), "    ", position + 4);
                     }
                 }
@@ -1286,12 +1272,12 @@ public class TextEditor extends BorderPane
             private boolean handleKeyboardEdit(KeyEvent evt)
             {
                 KeyCode code = evt.getCode();
-                
+
                 if (evt.isAltDown())
                 {
                     if (!editable)
                         return false;
-                    
+
                     int line = getCurrentLineIndex();
                     int start = getLineStartPosition(line);
                     int end = getLineEndPosition(line);
@@ -1307,7 +1293,7 @@ public class TextEditor extends BorderPane
                         return alterContent(start, end, prevStart, lineText, prevStart + columnOffset);
                     }
                     else if (code == KeyCode.DOWN)
-                    {   
+                    {
                         String lineText = content.substring(start, end);
                         alterContent(start, end, -1, null, position);
                         int nextStart = getLineStartPosition(line+1);
@@ -1347,7 +1333,7 @@ public class TextEditor extends BorderPane
                                 alterContent(selectionStart, selectionStart+4, -1, null, position-4, false);
                             }
                         }
-                        
+
                         for (int i=selectionStart; i<selectionEnd-5; i++)
                         {
                             if (content.substring(i, i+5).equals("\n    "))
@@ -1373,7 +1359,7 @@ public class TextEditor extends BorderPane
                             }
                         }
                     }
-                    
+
                     return true;
                 }
 
@@ -1409,22 +1395,22 @@ public class TextEditor extends BorderPane
                     else if ((code == KeyCode.V) && editable)
                     {
                         Clipboard clipboard = Clipboard.getSystemClipboard();
-                    
+
                         Object toPaste = clipboard.getContent(DataFormat.PLAIN_TEXT);
                         if (toPaste == null)
                             toPaste = clipboard.getContent(DataFormat.URL);
                         if (toPaste == null)
                             toPaste = clipboard.getContent(DataFormat.HTML);
-                    
+
                         if (toPaste == null)
                             return true;
-                        
+
                         if ((selectionStart >= 0) && (selectionEnd >= 0))
                             position = selectionStart;
-                    
+
                         String str = Utils.removeUnprintableChars(toPaste.toString());
                         return alterContent(selectionStart, selectionEnd, Math.max(0, position), str, position + str.length());
-                    } 
+                    }
                     else if ((code == KeyCode.Z) && editable)
                     {
                         if (evt.isShiftDown())
@@ -1450,7 +1436,7 @@ public class TextEditor extends BorderPane
                         int line = getCurrentLineIndex();
                         if (line < 0)
                             return true;
-                   
+
                         int start = getLineStartPosition(line);
                         int end = getLineEndPosition(line);
                         if (start >= end)
@@ -1473,7 +1459,7 @@ public class TextEditor extends BorderPane
                     return true;
 
                 wasEdited = false;
-                boolean initialEditedState = hasBeedEdited; 
+                boolean initialEditedState = hasBeedEdited;
                 try
                 {
                     showing = true;
@@ -1504,12 +1490,12 @@ public class TextEditor extends BorderPane
 
                 double minVisibleY = getViewportStart();
                 double maxVisibleY = minVisibleY + Math.max(lineHeight, getHeight() - lineHeight);
-                
+
                 if (yPosition < minVisibleY)
                     scrollBar.setValue(100*Math.min(1, yPosition/textHeight));
                 else if (yPosition >= maxVisibleY)
                     scrollBar.setValue(100*Math.min(1, (yPosition+lineHeight)/textHeight));
-                
+
                 scrollBar.configureBar();
                 drawText();
             }
@@ -1585,7 +1571,7 @@ public class TextEditor extends BorderPane
                 {
                     if (content.charAt(i) != '\n')
                         continue;
-                    
+
                     if (line < startLine)
                         lineStartPos = i+1;
                     else if (line >= endLine)
@@ -1595,7 +1581,7 @@ public class TextEditor extends BorderPane
                     }
                     line++;
                 }
-                
+
                 if (lineStartPos >= 0)
                     setSelectedText(lineStartPos, content.length());
             }
@@ -1604,30 +1590,30 @@ public class TextEditor extends BorderPane
             {
                 if (selectionStart < 0)
                     return -1;
-                
+
                 int result = 0;
                 for (int i=0; i<content.length(); i++)
                 {
                     if (content.charAt(i) == '\n')
                         result++;
-                    
+
                     if (i >= selectionStart)
                         break;
                 }
                 return result;
             }
-            
+
             int getHighlightLineEnd()
             {
                 if (selectionEnd < 0)
                     return -1;
-                
+
                 int result = 0;
                 for (int i=0; i<content.length(); i++)
                 {
                     if (content.charAt(i) == '\n')
                         result++;
-                    
+
                     if (i >= selectionEnd)
                         break;
                 }
@@ -1642,7 +1628,7 @@ public class TextEditor extends BorderPane
                     return;
                 if ((pos < 0) || !Character.isLetterOrDigit(content.charAt(pos)))
                     return;
-                
+
                 selectionStart = pos;
                 for (selectionStart = pos; selectionStart>0; selectionStart--)
                     if (!Character.isLetterOrDigit(content.charAt(selectionStart)))
@@ -1650,7 +1636,7 @@ public class TextEditor extends BorderPane
                         selectionStart++;
                         break;
                     }
-                
+
                 selectionEnd = pos;
                 for (selectionEnd = pos; selectionEnd<content.length(); selectionEnd++)
                     if (!Character.isLetterOrDigit(content.charAt(selectionEnd)))
@@ -1698,7 +1684,7 @@ public class TextEditor extends BorderPane
                     int pos = Math.max(0, position - ll.start);
                     int row = pos / charsPerLine;
                     int col = pos % charsPerLine;
-                
+
                     yPosition = ll.yPosition + lineHeight*row;
                     xPosition = lineNumberMargin + col*charWidth -1;
                     caretPositioned(lineIndex, col);
@@ -1717,11 +1703,11 @@ public class TextEditor extends BorderPane
             }
         }
 
-        class LineOfText 
+        class LineOfText
         {
             int lineNumber, start, end;
             double yPosition, yHeight;
-            
+
             LineOfText(int number, int start, int end)
             {
                 this.start = start;
@@ -1756,12 +1742,12 @@ public class TextEditor extends BorderPane
                 int charsPerLine = (int) (Math.max(1, (totalWidth - lineNumberMargin) / charWidth));
                 int row = (int) ((y - yPosition)/lineHeight);
                 int col = Math.max(0, ((int) (x - lineNumberMargin))/charWidth);
-                
+
                 return Math.max(start, Math.min(end, start + col + row*charsPerLine));
             }
-            
+
             double drawLine(GraphicsContext gc, double yPosition, double totalWidth, double viewportPos, double viewportHeight)
-            {  
+            {
                 this.yPosition = yPosition;
                 yHeight = lineHeight;
                 double yPos = yPosition;
@@ -1792,21 +1778,21 @@ public class TextEditor extends BorderPane
                         }
 
                         if (ch == '\n')
-                            break;                        
+                            break;
                         if ((ch < 0x20) || (ch > 0x7E))
                             continue;
 
                         double yy = yPos + fontBaseline - viewportPos;
                         if ((yy < -lineHeight) || (yy >= viewportHeight + lineHeight))
                             continue;
-                        
+
                         boolean isSelected = (i>=caret.selectionStart) && (i<caret.selectionEnd);
                         if (isSelected)
                         {
                             gc.setFill(selectionColour);
                             gc.fillRect(xPos, Math.max(0, yPos-viewportPos), charWidth, lineHeight+1);
                         }
-                        
+
                         setStyleForCharacter(content, lineNumber, i, isSelected, caret.position, gc);
                         gc.fillText(String.valueOf(ch), xPos, yy);
                     }
@@ -1820,7 +1806,7 @@ public class TextEditor extends BorderPane
                 double yy = yPosition + fontBaseline - viewportPos;
                 if ((yy < -lineHeight) || (yy >= viewportHeight + lineHeight))
                     return;
-                
+
                 setStyleForLineNumber(content, lineNumber, caret.position, gc);
                 int n = lineNumber;
                 int xPos = lineNumberMargin - charWidth - 7;
@@ -1838,7 +1824,7 @@ public class TextEditor extends BorderPane
                 return content.substring(start, end);
             }
         }
-        
+
         public void setText(String src)
         {
             caret.position = 0;
@@ -1872,11 +1858,11 @@ public class TextEditor extends BorderPane
 
             if (start <= content.length())
                 buffer.add(new LineOfText(lineNumber++, start, content.length()));
-            
+
             lines = new LineOfText[buffer.size()];
             buffer.toArray(lines);
 
-            lineNumberMargin = Math.max(2, 1 + (int) Math.log10(lineNumber))*charWidth + 10; 
+            lineNumberMargin = Math.max(2, 1 + (int) Math.log10(lineNumber))*charWidth + 10;
 
             double w = getWidth() - lineNumberMargin;
             textHeight = 0;
@@ -1927,7 +1913,7 @@ public class TextEditor extends BorderPane
     {
         gc.setFill(textColour);
     }
-    
+
     protected void setStyleForLineNumber(CharSequence content, int lineNumber, int caretPos, GraphicsContext gc)
     {
         gc.setFill(lineNumberColour);

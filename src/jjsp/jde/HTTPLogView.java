@@ -1,52 +1,43 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.nio.file.*;
-import java.lang.reflect.*;
-import java.util.*;
-import javax.script.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.property.*;
-import javafx.beans.value.*;
-import javafx.scene.paint.*;
-import javafx.scene.text.*;
+import java.io.ByteArrayInputStream;
+import java.net.InetAddress;
+import java.util.Iterator;
+import java.util.Map;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyLongWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.*;
-import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.web.*;
-
-import javafx.geometry.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.collections.*;
-
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.*;
+import javafx.stage.Stage;
+import javafx.util.Callback;
 import jjsp.http.*;
-import jjsp.engine.*;
-import jjsp.util.*;
+import jjsp.util.Utils;
 
 public class HTTPLogView extends BorderPane implements HTTPServerLogger
 {
@@ -92,18 +83,18 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
         detailsPane.setMaxWidth(400);
         detailsPane.setMinWidth(400);
         detailsPane.setStyle("-fx-border-width: 2px; -fx-border-color: #0052A3");
-        
-        widthProperty().addListener((evt) -> 
-                                    { 
-                                        double w = Math.max(50, getWidth() - 473); 
-                                        if (w < 250) 
-                                            detailsPane.toBack(); 
-                                        else if (detailsShowing) 
-                                            detailsPane.toFront(); 
-                                        detailsPane.setMaxWidth(w); 
+
+        widthProperty().addListener((evt) ->
+                                    {
+                                        double w = Math.max(50, getWidth() - 473);
+                                        if (w < 250)
+                                            detailsPane.toBack();
+                                        else if (detailsShowing)
+                                            detailsPane.toFront();
+                                        detailsPane.setMaxWidth(w);
                                         detailsPane.setMinWidth(w);
                                     });
-        
+
         stack = new StackPane(table, detailsPane);
         StackPane.setAlignment(detailsPane, Pos.CENTER_RIGHT);
 
@@ -118,7 +109,7 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
         editor.requestFocus();
         table.requestFocus();
     }
-        
+
     public void requestProcessed(HTTPLogEntry logEntry)
     {
         if (Platform.isFxApplicationThread())
@@ -130,8 +121,8 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
     public void clear()
     {
         table.logList.clear();
-        detailsShowing = false; 
-        detailsPane.toBack(); 
+        detailsShowing = false;
+        detailsPane.toBack();
     }
 
     private void updateDetails(HTTPLogEntry entry)
@@ -161,7 +152,7 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
                 continue;
             buf.append("    "+key+" : "+e.getValue()+"\n");
         }
-        
+
         buf.append("\n");
         buf.append("Response:          "+entry.getResponseMainLine()+"\n");
         Iterator itt2 = entry.respHeaders.entrySet().iterator();
@@ -188,8 +179,8 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
                 String errString = JDETextEditor.toString(chain.error);
                 errString = errString.replace("\n", "\n          ");
                 buf.append(errString);
-            }  
-                
+            }
+
             buf.append("\n");
         }
 
@@ -198,50 +189,50 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
         //editor.scrollToLine(0);
     }
 
-    class HTTPLogTable extends TableView 
+    class HTTPLogTable extends TableView
     {
         ObservableList logList;
 
         HTTPLogTable()
         {
             setEditable(false);
-            
-            TableColumn time = createColumn("Time", 200, -200, (element) -> 
-                                     { 
+
+            TableColumn time = createColumn("Time", 200, -200, (element) ->
+                                     {
                                          HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyStringWrapper(utils.formatHTTPDate(entry.requestReceived)); 
+                                         return new ReadOnlyStringWrapper(utils.formatHTTPDate(entry.requestReceived));
                                      });
 
-            TableColumn delay = createColumn("Delay", 70, -70, (element) -> 
-                                     { 
+            TableColumn delay = createColumn("Delay", 70, -70, (element) ->
+                                     {
                                          HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyLongWrapper(entry.totalRequestTime()); 
+                                         return new ReadOnlyLongWrapper(entry.totalRequestTime());
                                      });
             delay.setStyle("-fx-alignment: CENTER-RIGHT;");
 
-            TableColumn address = createColumn("Client Address", 200, -200, (element) -> 
-                                     { 
+            TableColumn address = createColumn("Client Address", 200, -200, (element) ->
+                                     {
                                          HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyStringWrapper(entry.clientAddress.toString()); 
+                                         return new ReadOnlyStringWrapper(entry.clientAddress.toString());
                                      });
 
-            TableColumn req = createColumn("HTTP Request", 150, 400, (element) -> 
-                                     { 
+            TableColumn req = createColumn("HTTP Request", 150, 400, (element) ->
+                                     {
                                          HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyStringWrapper(entry.getRequestMainLine()); 
-                                     });
-            
-
-            TableColumn resp = createColumn("HTTP Response", 150, 400, (element) -> 
-                                     { 
-                                         HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyStringWrapper(entry.getResponseMainLine()); 
+                                         return new ReadOnlyStringWrapper(entry.getRequestMainLine());
                                      });
 
-            TableColumn chain = createColumn("Filter Chain", 70, 200, (element) -> 
-                                     { 
+
+            TableColumn resp = createColumn("HTTP Response", 150, 400, (element) ->
+                                     {
                                          HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
-                                         return new ReadOnlyStringWrapper(entry.filterChain.getPath()); 
+                                         return new ReadOnlyStringWrapper(entry.getResponseMainLine());
+                                     });
+
+            TableColumn chain = createColumn("Filter Chain", 70, 200, (element) ->
+                                     {
+                                         HTTPLogEntry entry = (HTTPLogEntry) ((TableColumn.CellDataFeatures) element).getValue();
+                                         return new ReadOnlyStringWrapper(entry.filterChain.getPath());
                                      });
 
             getColumns().addAll(req, time, resp, address, chain, delay);
@@ -250,7 +241,7 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
             setItems(logList);
 
             getSelectionModel().selectedItemProperty().addListener((evt) -> { updateDetails((HTTPLogEntry) getSelectionModel().getSelectedItem()); });
-            
+
             setOnMouseClicked((evt) -> { if (evt.getClickCount() < 2) return; detailsShowing = true; detailsPane.toFront();});
         }
 
@@ -265,7 +256,7 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
             }
             else
                 result.setPrefWidth(prefWidth);
-                
+
             result.setStyle("-fx-alignment: CENTER-LEFT;");
             result.setCellValueFactory(cb);
             return result;

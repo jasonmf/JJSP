@@ -1,59 +1,37 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 
 package jjsp.jde;
 
-import java.net.*;
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-
-import java.awt.image.BufferedImage;
-import javax.imageio.*;
-
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.beans.*;
-import javafx.beans.value.*;
-import javafx.scene.canvas.*;
-import javafx.scene.effect.*;
-import javafx.scene.shape.*;
-import javafx.scene.text.*;
-import javafx.scene.input.*;
-import javafx.scene.paint.*;
+import java.io.StringWriter;
+import java.net.URI;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.concurrent.Worker.State;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.input.*;
-import javafx.scene.image.*;
-import javafx.scene.transform.*;
+import javafx.scene.paint.Color;
 import javafx.scene.web.*;
-import javafx.geometry.*;
-import javafx.animation.*;
-import javafx.util.*;
-import javafx.stage.*;
-import javafx.concurrent.Worker.*;
-import javafx.collections.*;
-
-import netscape.javascript.*;
-
-import jjsp.util.*;
-import jjsp.http.*;
+import javafx.stage.Stage;
 
 public class WebBrowser extends JDEComponent
 {
@@ -88,17 +66,17 @@ public class WebBrowser extends JDEComponent
         source = new TextEditor(JDETextEditor.EDITOR_TEXT_SIZE);
         controls = new ControlBox();
         main = new StackPane(source, webView);
-        
+
         setTop(controls);
         setCenter(main);
         source.setColours(Color.GREEN);
 
         WebEngine engine = webView.getEngine();
-        engine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> 
-                                                           { 
-                                                               if (!isInitialLoad && isFixedURI) 
-                                                                   Platform.runLater(() -> engine.getLoadWorker().cancel()); 
-                                                               if (newState == State.SUCCEEDED) 
+        engine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) ->
+                                                           {
+                                                               if (!isInitialLoad && isFixedURI)
+                                                                   Platform.runLater(() -> engine.getLoadWorker().cancel());
+                                                               if (newState == State.SUCCEEDED)
                                                                    contentLoaded();
                                                            });
 
@@ -116,7 +94,7 @@ public class WebBrowser extends JDEComponent
             throw new IllegalStateException("No URI specified for fixed location");
     }
 
-    public void setDisplayed(boolean isShowing) 
+    public void setDisplayed(boolean isShowing)
     {
         super.setDisplayed(isShowing);
         source.setIsShowing(isShowing);
@@ -127,7 +105,7 @@ public class WebBrowser extends JDEComponent
         try
         {
             URI uri = new URI(webView.getEngine().getLocation());
-        
+
             if (isInitialLoad)
             {
                 initialURI = uri;
@@ -157,7 +135,7 @@ public class WebBrowser extends JDEComponent
         {
             return (String) webView.getEngine().executeScript("document.documentElement.outerHTML");
         }
-        catch (Exception ee) 
+        catch (Exception ee)
         {
             return "<< Error getting source from Web View: "+ee+" >>";
         }
@@ -171,13 +149,13 @@ public class WebBrowser extends JDEComponent
             html = html.replace("\n", "\\n");
             html = html.replace("\r", "\\r");
             html = html.replace("\t", "\\t");
-            
+
             String lower = html.toLowerCase();
             if (lower.startsWith("<html>"))
                 html = html.substring(6);
             if (lower.endsWith("</html>"))
                 html = html.substring(0, html.length()-7);
-        
+
             String jsSource = "document.documentElement.innerHTML=\""+html+"\";";
             webView.getEngine().executeScript(jsSource);
         }
@@ -251,14 +229,14 @@ public class WebBrowser extends JDEComponent
             sw.write("    if(rel.indexOf(\"icon\") != -1) return link.href;");
             sw.write("}");
             sw.write(" return null;})();");
-            
+
             Object favURI = webView.getEngine().executeScript(sw.toString());
             if (favURI == null)
                 return null;
             return new URI(favURI.toString());
         }
         catch (Exception e) {}
-        
+
         return null;
     }
 
@@ -298,7 +276,7 @@ public class WebBrowser extends JDEComponent
 
             showSource = new CheckBox("Show Source");
             showSource.setStyle("-fx-font-size:12px;-fx-padding-top:5px");
-            showSource.setOnAction((evt) -> 
+            showSource.setOnAction((evt) ->
                                    {
                                        if (showSource.isSelected())
                                        {
@@ -324,9 +302,9 @@ public class WebBrowser extends JDEComponent
 
             Button loadExternal = new Button("Launch ->");
             loadExternal.setStyle(fontStyle);
-            loadExternal.setOnAction((evt) ->  { JDE.launchExternalBrowser(getURI()); }); 
+            loadExternal.setOnAction((evt) ->  { JDE.launchExternalBrowser(getURI()); });
             loadExternal.setPrefWidth(100);
-            
+
             Button home = new Button("Home");
             home.setStyle(fontStyle);
             home.setOnAction((evt) -> loadHomeURI());
@@ -343,10 +321,10 @@ public class WebBrowser extends JDEComponent
                 forward.setStyle(fontStyle);
                 forward.setOnAction((evt) -> goHistory(1));
                 forward.setPrefWidth(100);
-                
+
                 hb.getChildren().addAll(back, forward, reload, home);
             }
-            else                
+            else
                 hb.getChildren().addAll(home);
 
             TextField search = new TextField();
@@ -355,11 +333,11 @@ public class WebBrowser extends JDEComponent
             search.setMinWidth(40);
             search.setMaxWidth(Integer.MAX_VALUE);
             search.setPromptText("Search page ...");
-            
+
             Button find = new Button("Find");
             search.setOnAction((event) -> findInPage(search.getText()));
             find.setOnAction((event) -> findInPage(search.getText()));
-            
+
             HBox hb2 = new HBox(10);
             hb2.setAlignment(Pos.CENTER);
             hb2.getChildren().addAll(showSource, search, find, loadExternal);
@@ -390,7 +368,7 @@ public class WebBrowser extends JDEComponent
                 String text = location.getText();
                 if (!text.startsWith("http") && !text.startsWith("file:"))
                     text = "http://"+text;
-                
+
                 return new URI(text);
             }
             catch (Exception e)

@@ -2,6 +2,9 @@ sysname = $(shell uname -o)
 cygwinname = Cygwin
 version = 6.10
 
+# For Java 11 and later, Javafx is no longer bundled with Java
+# PATH_TO_FX is the local environment variable that points to the location of hte Javafx modules
+
 .PHONY: build
 build: compile jjsp
 
@@ -13,9 +16,9 @@ compile:
 	mkdir -p build
 	chmod -R a+r+w build
 ifeq ($(sysname), $(cygwinname))
-	javac -cp ".;" -parameters -d build `find src/ -name \*.java`
+	javac --module-path "${PATH_TO_FX}" --add-modules=javafx.swing,javafx.web -cp ".;" -parameters -d build `find src/ -name \*.java`
 else
-	javac -cp ".:" -parameters -d build `find src/ -name \*.java`
+	javac --module-path "${PATH_TO_FX}" --add-modules=javafx.swing,javafx.web -cp ".:" -parameters -d build `find src/ -name \*.java`
 endif
 
 .PHONY: clean
