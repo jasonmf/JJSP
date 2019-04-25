@@ -400,6 +400,8 @@ public class Engine
     {
         public void run()
         {
+            var log = getLogger();
+            log.log(Level.INFO, "Engine Initialiser Running");
             boolean launchOK = false;
             try
             {
@@ -409,14 +411,17 @@ public class Engine
 
                 synchronized (Engine.this)
                 {
-                    if (stop)
+                    if (stop) {
+                        log.log(Level.SEVERE, "Engine stopped before launch");
                         throw new IllegalStateException("Engine stopped before launch");
+                    }
                     jjspRuntime = jr;
                 }
 
                 compile(jr, jsSrc);
                 if (createServer(jr) == null)
                 {
+                    log.log(Level.SEVERE, "Failed to create HTTP server");
                     launchComplete(null, jjspRuntime, false);
                     return;
                 }
@@ -430,8 +435,11 @@ public class Engine
 
                 if (!isListening)
                 {
-                    if (getDeclaredServerSocketInfo().length > 0)
-                        runtimeError(new IllegalStateException("Failed to open required ports "+Arrays.toString(getDeclaredServerSocketInfo())));
+                    log.log(Level.SEVERE, "Server is not listening on ports, stopping");
+                    if (getDeclaredServerSocketInfo().length > 0) {
+                        log.log(Level.SEVERE, "Failed to open required ports " + Arrays.toString(getDeclaredServerSocketInfo()));
+                        runtimeError(new IllegalStateException("Failed to open required ports " + Arrays.toString(getDeclaredServerSocketInfo())));
+                    }
                     stop();
                 }
                 else
@@ -439,14 +447,18 @@ public class Engine
             }
             catch (Throwable t)
             {
+                log.log(Level.SEVERE, "Exception thrown during launch: " + t.toString());
                 runtimeError(t);
             }
             finally
             {
-                if (!launchOK)
+                if (!launchOK) {
+                    log.log(Level.SEVERE, "Launch marked as not OK, stopping");
                     stop();
+                }
                 else
                 {
+                    log.log(Level.INFO, "Engine launched successfully");
                     synchronized (Engine.this)
                     {
                         running = true;
@@ -557,6 +569,7 @@ public class Engine
         System.out.println("\nLogging output to log directory "+logDirPath+"\n");
         Log.set(logDirPath);
         Logger log = Logger.getGlobal();
+        log.addHandler(new StreamHandler(System.out, new SimpleFormatter()));
 
         // find (and parse) main source file
         File srcFile = new File(fileName);
@@ -569,6 +582,7 @@ public class Engine
 
         Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, args);
         engine.start();
+        log.log(Level.INFO, "Engine Started");
 
         // Console will be null if running without any connected stdin (e.g. as a background process under Linux)
         Console c = System.console();
@@ -602,21 +616,26 @@ public class Engine
             }).start();
         }
 
-        while (true)
-        {
+        while (true) {
             String output = engine.getLatestConsoleOutput();
             if ((output != null) && (output.length()>0) && (log != null))
                 log.log(Level.INFO, output);
 
-            if (engine.stopped())
+            if (engine.stopped()) {
+                log.log(Level.INFO, "Engine stopped");
                 break;
-            if (engine.stopRequested())
+            }
+
+            if (engine.stopRequested()) {
+                log.log(Level.INFO, "Engine stop requested");
                 engine.stop();
-            try
-            {
+            }
+
+            try {
                 Thread.sleep(100);
             }
-            catch (Exception e) {}
+            catch (Exception e) {
+            }
         }
 
         String output = engine.getLatestConsoleOutput();
