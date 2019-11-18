@@ -218,7 +218,7 @@ public class HTTPHeaders
                 {
                     ps.print(key);
                     ps.print(": ");
-                    ps.print(Utils.getAsciiBytes(HTTPResponseHeaders.formatSetCookie((HttpCookie)values.get(j))));
+                    ps.print(Utils.getBytes(HTTPResponseHeaders.formatSetCookie((HttpCookie)values.get(j))));
                     ps.print("\r\n");
                 }
             }

@@ -88,7 +88,7 @@ public class SimpleDirectoryDataIndex implements WritableDataInfoIndex
             throw new IOException("Content hash mismatch - data corrupted");
 
         String rawFileName = Stream.of(info.keyName, info.versionName, info.contentHash, Long.toString(info.created.getTime())).collect(Collectors.joining(DELIMITER));
-        String fileName = Base64.getUrlEncoder().withoutPadding().encodeToString(Utils.getAsciiBytes(rawFileName))+".fic";
+        String fileName = Base64.getUrlEncoder().withoutPadding().encodeToString(Utils.getBytes(rawFileName))+".fic";
 
         File ff = new File(directory, fileName);
         try
@@ -154,7 +154,7 @@ public class SimpleDirectoryDataIndex implements WritableDataInfoIndex
         if ((extension.length() > 0) && (!extension.startsWith(".")))
             extension = "."+extension;
 
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(Utils.getAsciiBytes(str))+extension;
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(Utils.getBytes(str))+extension;
     }
     
     public String toString()

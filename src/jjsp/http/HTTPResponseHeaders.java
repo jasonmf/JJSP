@@ -393,12 +393,12 @@ public class HTTPResponseHeaders extends HTTPHeaders
         }
     }
 
-    private static byte[] crlf = Utils.getAsciiBytes("\r\n");
-    private static byte[] colon = Utils.getAsciiBytes(": ");
+    private static byte[] crlf = Utils.getBytes("\r\n");
+    private static byte[] colon = Utils.getBytes(": ");
 
     public void printToStream(OutputStream out) throws IOException
     {
-        out.write(Utils.getAsciiBytes(mainLine));
+        out.write(Utils.getBytes(mainLine));
         out.write(crlf);
 
         Iterator itt = headerMap.entrySet().iterator();
@@ -410,9 +410,9 @@ public class HTTPResponseHeaders extends HTTPHeaders
             try
             {
                 String sval = (String) val;
-                out.write(Utils.getAsciiBytes(key));
+                out.write(Utils.getBytes(key));
                 out.write(colon);
-                out.write(Utils.getAsciiBytes(sval));
+                out.write(Utils.getBytes(sval));
                 out.write(crlf);
             }
             catch (ClassCastException e) //handle a list of Set-Cookie entries
@@ -420,9 +420,9 @@ public class HTTPResponseHeaders extends HTTPHeaders
                 List ll = (List) val;
                 for (int i=0; i<ll.size(); i++)
                 {
-                    out.write(Utils.getAsciiBytes(key));
+                    out.write(Utils.getBytes(key));
                     out.write(colon);
-                    out.write(Utils.getAsciiBytes(formatSetCookie((HttpCookie)ll.get(i))));
+                    out.write(Utils.getBytes(formatSetCookie((HttpCookie)ll.get(i))));
                     out.write(crlf);
                 }
             }
@@ -430,7 +430,7 @@ public class HTTPResponseHeaders extends HTTPHeaders
         out.write(crlf);
     }
 
-    private static byte[] continueResponseBytes = Utils.getAsciiBytes("HTTP/1.1 100 Continue\r\n\r\n");
+    private static byte[] continueResponseBytes = Utils.getBytes("HTTP/1.1 100 Continue\r\n\r\n");
 
     public static void sendContinueResponse(OutputStream out) throws IOException
     {

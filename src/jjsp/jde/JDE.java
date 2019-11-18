@@ -590,7 +590,7 @@ public class JDE extends Application
                     try
                     {
                         if (ff.lastModified() > jde.getLastModified())
-                            jde.loadAutoSavedData(Utils.getAsciiBytes(JDETextEditor.loadTextFromURI(uri)));
+                            jde.loadAutoSavedData(Utils.getBytes(JDETextEditor.loadTextFromURI(uri)));
                     }
                     catch (Exception e) {}
                 }

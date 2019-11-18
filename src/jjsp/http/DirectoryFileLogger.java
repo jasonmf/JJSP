@@ -108,7 +108,7 @@ public class DirectoryFileLogger implements HTTPServerLogger
     {
         HTTPServerLogger logger = new DirectoryFileLogger(10, 10000, new File("LogTEST"));
         
-        byte[] raw = Utils.getAsciiBytes("GET /test.html HTTP/1.1\r\nUser-Agent: tester\r\nX-Forwarded-For:192.55.33.2\r\n\r\n");
+        byte[] raw = Utils.getBytes("GET /test.html HTTP/1.1\r\nUser-Agent: tester\r\nX-Forwarded-For:192.55.33.2\r\n\r\n");
         HTTPRequestHeaders req = new HTTPRequestHeaders();
         req.readHeadersFromStream(new ByteArrayInputStream(raw));
         

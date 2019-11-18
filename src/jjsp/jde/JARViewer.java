@@ -575,7 +575,7 @@ public class JARViewer extends JDEComponent
                 buf.append(jsonContent);
                 buf.append("\n</pre>\n</body></html>");
 
-                content = Utils.getAsciiBytes(buf.toString());
+                content = Utils.getBytes(buf.toString());
                 mimeType = "text/html";
             }
 

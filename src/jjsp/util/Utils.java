@@ -48,13 +48,6 @@ public class Utils
         return toString(rawText, 0, rawText.length);
     }
 
-    public static byte[] getAsciiBytes(String src)
-    {
-        if (src == null)
-            return null;
-        return src.getBytes(ASCII);
-    }
-
     public static byte[] getBytes(String src) {
         return src == null ? null : src.getBytes(UTF8);
     }
@@ -454,7 +447,7 @@ public class Utils
 
     public static String SHA256(String in)
     {
-        return toHexString(SHA256(getAsciiBytes(in)));
+        return toHexString(SHA256(getBytes(in)));
     }
 
     public synchronized static byte[] SHA1(byte[] input) throws Exception

@@ -582,7 +582,7 @@ public class Environment extends ImageGenerator
         else
         {
             String ts = contents.toString();
-            contents = Utils.getAsciiBytes(ts);
+            contents = Utils.getBytes(ts);
             message = "Local Path: '"+path+"' -> content length "+ts.length()+"";
         }
 
@@ -1088,9 +1088,8 @@ public class Environment extends ImageGenerator
         return String.format("%."+decimalPlaces+"f", n.doubleValue());
     }
 
-    public byte[] getAsciiBytes(String str)
-    {
-        return Utils.getAsciiBytes(str);
+    public byte[] getAsciiBytes(String str) {
+        return Utils.getBytes(str);
     }
 
     public String toAsciiString(byte[] rawText)
