@@ -56,7 +56,7 @@ public class SimpleDirectoryDataIndex implements WritableDataInfoIndex
 
             try
             {
-                String raw = Utils.toAsciiString(Base64.getUrlDecoder().decode(name));
+                String raw = Utils.toString(Base64.getUrlDecoder().decode(name));
                 String[] parts = raw.split(Pattern.quote(DELIMITER));
 
                 String keyName = parts[0];

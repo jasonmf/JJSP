@@ -26,52 +26,30 @@ import java.util.function.*;
 import java.util.zip.*;
 import java.util.jar.*;
 
-public class Utils
-{
-    public static final String DEFAULT_VERSION_STRING = "6.10";
-    public static final Charset ASCII = StandardCharsets.US_ASCII;
-    public static final Charset UTF8 = StandardCharsets.UTF_8;
-
-    public static String toAsciiString(byte[] rawText)
-    {
-        return toString(rawText);
-    }
-
-    public static String toUTF8String(byte[] rawBytes) {
-        return new String(rawBytes, UTF8);
-    }
-
-    public static String toString(byte[] rawText)
-    {
-        if (rawText == null)
-            return null;
-        return toString(rawText, 0, rawText.length);
-    }
+public class Utils {
+    private static final String DEFAULT_VERSION_STRING = "6.10";
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     public static byte[] getBytes(String src) {
         return src == null ? null : src.getBytes(UTF8);
     }
 
-    public static String toAsciiString(byte[] rawText, int offset, int length)
-    {
-        return toString(rawText, offset, length);
-    }
-
-    public static URI toURI(String s)
-    {
-        try
-        {
+    public static URI toURI(String s) {
+        try {
             return new URI(s);
         }
-        catch (Exception e) {}
+        catch (Exception ignored) {
+            //noop
+        }
         return null;
     }
 
-    public static String toString(byte[] rawText, int offset, int length)
-    {
-        if (rawText == null)
-            return null;
-        return new String(rawText, offset, length, ASCII);
+    public static String toString(byte[] rawText) {
+        return rawText == null ? null : toString(rawText, 0, rawText.length);
+    }
+
+    private static String toString(byte[] rawText, int offset, int length) {
+        return new String(rawText, offset, length, UTF8);
     }
 
     public static byte[] load(File src) throws IOException
@@ -184,19 +162,16 @@ public class Utils
         return buf.toString();
     }
 
-    public static String loadText(File src) throws IOException
-    {
-        return new String(load(src), ASCII);
+    public static String loadText(File src) throws IOException {
+        return new String(load(src), UTF8);
     }
 
-    public static String loadText(URI uri) throws IOException
-    {
+    public static String loadText(URI uri) throws IOException {
         return loadText(uri.toURL());
     }
 
-    public static String loadText(URL url) throws IOException
-    {
-        return new String(load(url.openStream()), ASCII);
+    private static String loadText(URL url) throws IOException {
+        return new String(load(url.openStream()), UTF8);
     }
 
     public static String loadText(String resourceName) throws IOException
@@ -615,7 +590,7 @@ public class Utils
             tt.printStackTrace(ps);
         ps.close();
 
-        String stackTrace = toUTF8String(bout.toByteArray());
+        String stackTrace = toString(bout.toByteArray());
         if ( escape )
             stackTrace = escapeHTMLSpecialCharacters(stackTrace);
         return stackTrace;
