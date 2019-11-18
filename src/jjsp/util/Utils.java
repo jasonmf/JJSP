@@ -55,6 +55,10 @@ public class Utils
         return src.getBytes(ASCII);
     }
 
+    public static byte[] getBytes(String src) {
+        return src == null ? null : src.getBytes(UTF8);
+    }
+
     public static String toAsciiString(byte[] rawText, int offset, int length)
     {
         return toString(rawText, offset, length);

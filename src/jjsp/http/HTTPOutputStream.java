@@ -231,7 +231,7 @@ public class HTTPOutputStream extends OutputStream
 
     public void sendContent(String content, String contentType) throws IOException
     {
-        sendContent(Utils.getAsciiBytes(content), contentType);
+        sendContent(Utils.getBytes(content), contentType);
     }
 
     public void sendContent(byte[] content, String contentType) throws IOException
