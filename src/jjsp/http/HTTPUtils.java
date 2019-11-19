@@ -122,7 +122,7 @@ public class HTTPUtils
 
     public String SHA256(String in)  throws Exception
     {
-        return Utils.toHexString(SHA256(Utils.getAsciiBytes(in)));
+        return Utils.toHexString(SHA256(Utils.getBytes(in)));
     }
 
     public String createETag(byte[] rawData)

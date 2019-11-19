@@ -274,7 +274,7 @@ public class HTTPLogView extends BorderPane implements HTTPServerLogger
             primaryStage.show();
             Platform.setImplicitExit(true);
 
-            byte[] raw = Utils.getAsciiBytes("GET /test.html HTTP/1.1\r\nUser-Agent: tester\r\n\r\n");
+            byte[] raw = Utils.getBytes("GET /test.html HTTP/1.1\r\nUser-Agent: tester\r\n\r\n");
             HTTPRequestHeaders req = new HTTPRequestHeaders();
             req.readHeadersFromStream(new ByteArrayInputStream(raw));
 

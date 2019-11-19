@@ -65,7 +65,7 @@ public class HTTPDataInfoIndex implements DataInfoIndex
     public String[] getKeyNames() throws IOException
     {
         URL url = formURL("");
-        String rawJSON = Utils.toAsciiString(Utils.load(getURLStream(url)));
+        String rawJSON = Utils.toString(Utils.load(getURLStream(url)));
 
         List ll = (List) JSONParser.parse(rawJSON);
         String[] result = new String[ll.size()];
@@ -81,7 +81,7 @@ public class HTTPDataInfoIndex implements DataInfoIndex
     public DataInfo[] getVersions(String reqPath) throws IOException
     {
         URL url = formURL(reqPath+"?");
-        String rawJSON = Utils.toAsciiString(Utils.load(getURLStream(url)));
+        String rawJSON = Utils.toString(Utils.load(getURLStream(url)));
 
         List ll = (List) JSONParser.parse(rawJSON);
         DataInfo[] result = new DataInfo[ll.size()];

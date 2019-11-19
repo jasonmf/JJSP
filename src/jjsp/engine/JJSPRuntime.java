@@ -812,7 +812,7 @@ public class JJSPRuntime extends Environment
         if (fixedData instanceof byte[])
             rawData = (byte[]) fixedData;
         else
-            rawData = Utils.getAsciiBytes(fixedData.toString());
+            rawData = Utils.getBytes(fixedData.toString());
 
         return new StaticDataFilter(name, fixedURI, rawData, 3600, contentType, chain);
     }

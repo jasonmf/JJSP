@@ -122,7 +122,7 @@ public class LocalStoreView extends BorderPane
             Object target = logList.get(ll.get(0));
 
             byte[] data = jenv.getLocal(target.toString());
-            String textVersion = Utils.toAsciiString(data);
+            String textVersion = Utils.toString(data);
 
             MenuItem openWeb = new MenuItem("Show in Web View");
             openWeb.setOnAction((evt1) ->
@@ -198,7 +198,7 @@ public class LocalStoreView extends BorderPane
             if (data == null)
                 return;
 
-            String textVersion = Utils.toAsciiString(data);
+            String textVersion = Utils.toString(data);
             String mime = HTTPHeaders.guessMIMEType(resourceName);
 
             if ((mime.indexOf("html") >= 0) || textVersion.toLowerCase().indexOf("<html>") >= 0)

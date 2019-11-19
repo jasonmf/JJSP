@@ -69,7 +69,7 @@ public class JDEHTMLEditor extends JDEComponent
             return null;
 
         lastHTMLText = currentText;
-        return Utils.getAsciiBytes(lastHTMLText);
+        return Utils.getBytes(lastHTMLText);
     }
 
     public void loadAutoSavedData(byte[] data)

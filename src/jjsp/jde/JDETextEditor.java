@@ -351,7 +351,7 @@ public class JDETextEditor extends JDEComponent
             
         try
         {
-            byte[] rawBytes = Utils.getAsciiBytes(editor.getText());
+            byte[] rawBytes = Utils.getBytes(editor.getText());
             
             if (target.getScheme().equals("file"))
             {
@@ -431,7 +431,7 @@ public class JDETextEditor extends JDEComponent
     public byte[] getDataForAutoSave()
     {
         if (editor.hasBeenEdited())
-            return Utils.getAsciiBytes(editor.getText());
+            return Utils.getBytes(editor.getText());
         return null;
     }
 

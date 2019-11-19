@@ -42,7 +42,7 @@ public class AES
     private final SecretKeySpec keySpec;
     private final Cipher encrypter, decrypter;
 
-    private static final byte[] SALT = Utils.getAsciiBytes("9afbiqm(*^wudg46");
+    private static final byte[] SALT = Utils.getBytes("9afbiqm(*^wudg46");
     private static SecureRandom random = new SecureRandom();
 
     public synchronized static byte[] randomBytes(int length)
@@ -128,7 +128,7 @@ public class AES
 
     public String encrypt(String in) throws Exception 
     {
-        return Utils.toHexString(encrypt(Utils.getAsciiBytes(in)));
+        return Utils.toHexString(encrypt(Utils.getBytes(in)));
     }
 
     public String decrypt(String cipher) throws Exception 
